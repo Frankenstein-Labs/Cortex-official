@@ -10,7 +10,17 @@ export const metadata: Metadata = constructMetadata({
   canonical: "/dashboard",
 });
 
-export default async function Dashboard() {
+export default async function Dashboard({
+  searchParams,
+}: {
+  searchParams: { callback?: string };
+}) {
+  // The web experience ends on the presentation page after authentication.
+  // Keep this protected compatibility route only for the desktop-app callback.
+  if (!searchParams.callback) {
+    return redirect("/");
+  }
+
   const {
     user,
     subscription,

@@ -38,7 +38,7 @@ export async function signin(
       `/dashboard?callback=${encodeURIComponent(callbackForDesktopApp)}`,
     );
   }
-  redirect(`/dashboard`);
+  redirect(`/`);
 }
 
 // Flow: User signs up with email and password
@@ -118,7 +118,7 @@ export async function updateUser(formData: UpdatePasswordFormData) {
   }
 
   revalidatePath("/", "layout");
-  redirect("/dashboard");
+  redirect("/");
 }
 
 // resend confirmation email
@@ -129,7 +129,7 @@ export async function resendConfirmationEmail(email: string) {
     type: "signup",
     email: email,
     options: {
-      emailRedirectTo: `${getURL()}/dashboard`,
+      emailRedirectTo: `${getURL()}/`,
     },
   });
 
