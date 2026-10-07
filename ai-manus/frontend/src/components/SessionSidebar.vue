@@ -11,16 +11,16 @@
         <div class="flex gap-0.5 items-center min-w-0" :class="isSessionSidebarShow ? 'clickable' : ''">
           <template v-if="isSessionSidebarShow">
             <div class="flex items-center justify-center flex-shrink-0">
-              <Bot :size="28" class="text-[var(--icon-primary)]" />
+              <Code2 :size="28" class="text-[var(--icon-primary)]" />
             </div>
-            <ManusLogoTextIcon :width="64.8" :height="28" />
+            <span class="cortex-sidebar-brand-name">Cortex Dev</span>
           </template>
           <template v-else>
             <div
               class="group flex items-center justify-center flex-shrink-0 size-[32px] mx-[2px] cursor-pointer rounded-md hover:bg-[var(--fill-tsp-gray-main)]"
               :title="t('Expand sidebar')"
               @click="toggleSessionSidebar">
-              <Bot :size="28" class="text-[var(--icon-primary)] group-hover:hidden" />
+              <Code2 :size="28" class="text-[var(--icon-primary)] group-hover:hidden" />
               <PanelLeft class="h-[18px] w-[18px] text-[var(--icon-secondary)] hidden group-hover:block" />
             </div>
           </template>
@@ -420,13 +420,12 @@
 
 <script setup lang="ts">
 import {
-  Bot, PanelLeft, SquarePen, MessageSquareDashed, ChevronUp, ChevronRight, Search, LibraryBig,
+  Code2, PanelLeft, SquarePen, MessageSquareDashed, ChevronUp, ChevronRight, Search, LibraryBig,
   Plus, FolderPlus, Check, Pin, PinOff, Folder, ListFilter, Ellipsis, Eye, Trash, Pencil,
 } from 'lucide-vue-next';
 import SessionItem from './SessionItem.vue';
 import UserMenu from './UserMenu.vue';
 import SearchDialog from './SearchDialog.vue';
-import ManusLogoTextIcon from './icons/ManusLogoTextIcon.vue';
 import { useSessionSidebar } from '../composables/useSessionSidebar';
 import { useAuth } from '../composables/useAuth';
 import { useDialog } from '../composables/useDialog';

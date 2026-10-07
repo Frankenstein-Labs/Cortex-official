@@ -5,7 +5,7 @@
     e4: flex items-center justify-end gap-[2px] overflow-hidden invisible group-hover:visible py-[2px]
          CopyChatEvent (default size-7) + EventTimestamp
   -->
-  <div v-if="message.type === 'user'" class="flex flex-col group mt-6 w-full items-end">
+  <div v-if="message.type === 'user'" class="flex flex-col group mt-6 w-full items-end cortex-user-message">
     <div class="max-w-[90%]">
       <div class="flex relative flex-col gap-2 max-w-full items-end">
         <ChatAttachmentList
@@ -30,15 +30,15 @@
       </div>
     </div>
   </div>
-  <!-- Official ChatReplyLayout: gap-2 w-full group mt-3 + header h-[26px] + Logo/ProductName/Lite -->
-  <div v-else-if="message.type === 'assistant'" class="flex flex-col gap-2 w-full group" :class="hideAssistantHeader ? 'mt-0' : 'mt-3'">
+  <!-- Cortex Dev response row -->
+  <div v-else-if="message.type === 'assistant'" class="flex flex-col gap-2 w-full group cortex-assistant-message" :class="hideAssistantHeader ? 'mt-0' : 'mt-3'">
     <div v-if="!hideAssistantHeader" class="flex items-center justify-between h-[26px] group">
       <div class="flex items-center gap-[8px] -ms-[2px] max-w-full">
         <component v-if="assistantIcon" :is="assistantIcon" :size="24" class="w-6 h-6" />
-        <Bot v-else :size="24" class="w-6 h-6" />
+        <span v-else class="cortex-agent-mark"><Code2 :size="15" /></span>
         <span v-if="assistantName" class="text-base text-[var(--text-primary)] tracking-tight leading-none">{{ assistantName }}</span>
         <template v-else-if="!assistantIcon">
-          <ManusTextIcon />
+          <span class="cortex-agent-wordmark">Cortex Dev</span>
         </template>
         <span
           v-if="showLiteBadge"
@@ -170,14 +170,14 @@
       </div>
     </div>
   </div>
-  <div v-else-if="message.type === 'attachments' && attachmentsContent.role === 'assistant'" class="flex flex-col gap-2 w-full group" :class="hideAssistantHeader ? 'mt-0' : 'mt-3'">
+  <div v-else-if="message.type === 'attachments' && attachmentsContent.role === 'assistant'" class="flex flex-col gap-2 w-full group cortex-assistant-message" :class="hideAssistantHeader ? 'mt-0' : 'mt-3'">
     <div v-if="!hideAssistantHeader" class="flex items-center justify-between h-[26px] group">
       <div class="flex items-center gap-[8px] -ms-[2px] max-w-full">
         <component v-if="assistantIcon" :is="assistantIcon" :size="24" class="w-6 h-6" />
-        <Bot v-else :size="24" class="w-6 h-6" />
+        <span v-else class="cortex-agent-mark"><Code2 :size="15" /></span>
         <span v-if="assistantName" class="text-base text-[var(--text-primary)] tracking-tight leading-none">{{ assistantName }}</span>
         <template v-else-if="!assistantIcon">
-          <ManusTextIcon />
+          <span class="cortex-agent-wordmark">Cortex Dev</span>
         </template>
         <span
           v-if="showLiteBadge"
@@ -197,7 +197,6 @@
 </template>
 
 <script setup lang="ts">
-import ManusTextIcon from './icons/ManusTextIcon.vue';
 import {
   Message,
   MessageContent,
@@ -210,7 +209,7 @@ import DOMPurify from 'dompurify';
 import { computed, ref, watch, nextTick, onBeforeUnmount, type Component } from 'vue';
 import { ToolContent, StepContent } from '../types/message';
 import { useRelativeTime } from '../composables/useTime';
-import { Bot, ChevronDown, ChevronRight } from 'lucide-vue-next';
+import { Code2, ChevronDown, ChevronRight } from 'lucide-vue-next';
 import AttachmentsMessage from './AttachmentsMessage.vue';
 import ChatMessageCopyButton from './ChatMessageCopyButton.vue';
 import ChatAttachmentList from './ChatAttachmentList.vue';

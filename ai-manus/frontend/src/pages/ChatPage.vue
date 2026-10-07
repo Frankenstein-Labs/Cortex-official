@@ -1,10 +1,10 @@
 <template>
   <SimpleBar ref="simpleBarRef" @scroll="handleScroll">
-    <!-- Chat column: full-bleed header (Manus) + centered message column -->
-    <div ref="chatContainerRef" class="relative flex flex-col h-full flex-1 min-w-0">
+    <!-- Cortex Dev chat panel: session controls, agent transcript, and composer. -->
+    <div ref="chatContainerRef" class="relative flex flex-col h-full flex-1 min-w-0 cortex-workbench">
       <!-- Official session chrome header bar (CDP: manus.im/app/…) -->
       <div ref="observerRef"
-        class="flex h-[56px] w-full shrink-0 items-center justify-between py-[12px] md:px-[24px] ps-[16px] pe-[20px] md:ps-[16px] md:pe-[20px] gap-1 border-b sticky top-0 z-10 flex-shrink-0 [-webkit-app-region:drag] bg-[var(--background-gray-main)] border-[var(--border-main)]">
+        class="flex h-[56px] w-full shrink-0 items-center justify-between py-[12px] md:px-[24px] ps-[16px] pe-[20px] md:ps-[16px] md:pe-[20px] gap-1 border-b sticky top-0 z-10 flex-shrink-0 [-webkit-app-region:drag] bg-[var(--background-gray-main)] border-[var(--border-main)] cortex-panel-header">
         <div class="flex min-w-0 flex-1 items-center gap-1">
           <div class="flex items-center pointer-events-auto relative" ref="modeMenuRef">
             <button
@@ -13,7 +13,10 @@
               :aria-expanded="showModeMenu"
               aria-haspopup="menu"
               @click="toggleModeMenu">
-              <span class="text-[var(--text-primary)] md:text-[18px] text-[16px] font-[500] md:leading-[22px] leading-[20px] truncate">Manus</span>
+              <span class="flex items-center gap-2 text-[var(--text-primary)] md:text-[18px] text-[16px] font-[500] md:leading-[22px] leading-[20px] truncate">
+                <span class="cortex-agent-mark"><Code2 :size="15" /></span>
+                Cortex Dev
+              </span>
               <span
                 v-if="taskMode === 'chat'"
                 class="text-[var(--text-tertiary)] text-xs flex h-5 py-0.5 px-1.5 items-center rounded-[6px] border border-[var(--border-dark)] flex-shrink-0">
@@ -210,7 +213,7 @@ import { useAgentEvents } from '../composables/useAgentEvents';
 import { useSessionPhase } from '../composables/useSessionPhase';
 import { isComputerPanelTool } from '../constants/tool';
 import ComputerPanel from '../components/ComputerPanel.vue'
-import { ArrowDown, FileSearch, Lock, Globe, Link, Check, Ellipsis, Pencil, Star, Trash, FolderPlus, Folder, FolderSync, Pin, ChevronDown, CircleHelp } from 'lucide-vue-next';
+import { ArrowDown, Code2, FileSearch, Lock, Globe, Link, Check, Ellipsis, Pencil, Star, Trash, FolderPlus, Folder, FolderSync, Pin, ChevronDown, CircleHelp } from 'lucide-vue-next';
 import ShareIcon from '@/components/icons/ShareIcon.vue';
 import { showErrorToast, showSuccessToast } from '../utils/toast';
 import type { FileInfo } from '../api/file';
@@ -333,7 +336,7 @@ const showTakeControlBanner = computed(() =>
   phase.value === 'waiting' && !isBusy.value && hasBrowserTool.value,
 );
 
-const chatPlaceholder = computed(() => t('Send message to Manus'));
+const chatPlaceholder = computed(() => t('Send message to Cortex Dev'));
 
 const setTaskMode = async (mode: 'agent' | 'chat') => {
   showModeMenu.value = false;
@@ -835,7 +838,7 @@ const shareToSocial = async (network: 'x' | 'linkedin' | 'facebook' | 'reddit') 
     }
   }
   const url = encodeURIComponent(getShareUrl());
-  const text = encodeURIComponent(title.value || 'Manus');
+  const text = encodeURIComponent(title.value || 'Cortex Dev');
   const targets: Record<string, string> = {
     x: `https://twitter.com/intent/tweet?url=${url}&text=${text}`,
     linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${url}`,
@@ -986,4 +989,3 @@ const handleMoreClick = async (event: MouseEvent | KeyboardEvent) => {
   });
 }
 </script>
-

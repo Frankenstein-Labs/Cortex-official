@@ -3,9 +3,9 @@
     <div class="sticky top-0 left-0 w-full z-[10] px-[48px] max-sm:px-[12px] max-sm:bg-[var(--background-gray-login)]">
       <div class="w-full h-[60px] mx-auto flex items-center justify-between text-[var(--text-primary)]">
         <a href="/">
-          <div class="flex gap-0.5 w-fit items-center">
-            <Bot :size="30" class="text-[var(--icon-primary)]" />
-            <ManusLogoTextIcon :width="74.1" :height="32" />
+          <div class="flex gap-2 w-fit items-center">
+            <span class="cortex-agent-mark"><Code2 :size="18" /></span>
+            <span class="cortex-sidebar-brand-name">Cortex Dev</span>
           </div>
         </a>
       </div>
@@ -15,13 +15,13 @@
       <div class="w-full max-w-[720px] pt-[24px] mb-[40px] max-sm:pt-[0px]">
         <div class="flex flex-col items-center gap-[20px] relative" style="z-index:1">
           <div class="w-[80px] h-[80px] text-[var(--icon-primary)] max-sm:w-[64px] max-sm:h-[64px]">
-            <Bot :size="80" />
+            <Code2 :size="80" />
           </div>
           <h1 class="text-[20px] font-bold text-center text-[var(--text-primary)] max-sm:text-[18px]">
             {{ 
               isResettingPassword ? t('Reset Password') 
-              : isRegistering ? t('Register to Manus') 
-              : t('Login to Manus') 
+              : isRegistering ? t('Register to Cortex Dev')
+              : t('Login to Cortex Dev')
             }}
           </h1>
         </div>
@@ -43,8 +43,7 @@
 import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { Bot } from 'lucide-vue-next'
-import ManusLogoTextIcon from '@/components/icons/ManusLogoTextIcon.vue'
+import { Code2 } from 'lucide-vue-next'
 import LoginForm from '@/components/login/LoginForm.vue'
 import RegisterForm from '@/components/login/RegisterForm.vue'
 import ResetPasswordForm from '@/components/login/ResetPasswordForm.vue'

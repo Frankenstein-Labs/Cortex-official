@@ -1,9 +1,9 @@
 <template>
   <SimpleBar>
     <div
-      class="flex flex-col h-full flex-1 min-w-0 mx-auto w-full sm:min-w-[390px] px-5 justify-center items-start gap-2 relative max-w-full sm:max-w-full">
-      <!-- Top header — same Manus / Agent·Lite switcher chrome as ChatPage -->
-      <div class="w-[calc(100%+40px)] -mx-5 bg-[var(--background-gray-main)] sticky top-0 z-10 ps-[14px] pe-[20px] py-[12px] border-b border-transparent">
+      class="flex flex-col h-full flex-1 min-w-0 mx-auto w-full sm:min-w-[390px] px-5 justify-center items-start gap-2 relative max-w-full sm:max-w-full cortex-workbench">
+      <!-- Cortex Dev workspace header -->
+      <div class="w-[calc(100%+40px)] -mx-5 bg-[var(--background-gray-main)] sticky top-0 z-10 ps-[14px] pe-[20px] py-[12px] border-b border-transparent cortex-panel-header">
         <div class="flex justify-between items-center w-full">
           <div class="relative z-20 items-center flex-shrink-0 flex">
             <div class="flex items-center pointer-events-auto relative" ref="modeMenuRef">
@@ -13,7 +13,10 @@
                 :aria-expanded="showModeMenu"
                 aria-haspopup="menu"
                 @click="toggleModeMenu">
-                <span class="text-[var(--text-primary)] md:text-[18px] text-[16px] font-[500] md:leading-[22px] leading-[20px] truncate">Manus</span>
+                <span class="flex items-center gap-2 text-[var(--text-primary)] md:text-[18px] text-[16px] font-[500] md:leading-[22px] leading-[20px] truncate">
+                  <span class="cortex-agent-mark"><Code2 :size="15" /></span>
+                  Cortex Dev
+                </span>
                 <span
                   v-if="taskMode === 'chat'"
                   class="text-[var(--text-tertiary)] text-xs flex h-5 py-0.5 px-1.5 items-center rounded-[6px] border border-[var(--border-dark)] flex-shrink-0">
@@ -64,11 +67,11 @@
       </div>
       <div class="max-md:px-[16px] mx-auto w-full max-w-full sm:max-w-[768px] sm:min-w-[360px] mt-[20vh] mb-auto">
         <div class="w-full flex pl-4 items-center justify-start pb-4">
-          <span class="text-[var(--text-primary)] text-start font-serif text-[32px] leading-[40px]">
+          <span class="text-[var(--text-primary)] text-start font-sans text-[30px] font-semibold tracking-tight leading-[38px]">
             {{ $t('Hello') }}, {{ currentUser?.fullname }}
             <br />
             <span class="text-[var(--text-tertiary)]">
-              {{ $t('What can I do for you?') }}
+              {{ $t('What are we building today?') }}
             </span>
           </span>
         </div>
@@ -80,7 +83,7 @@
               :isRunning="false" />
           </div>
         </div>
-        <!-- Suggestion chips (structure replicated from manus.im home) -->
+        <!-- Coding-task starters for Cortex Dev -->
         <div class="relative w-full">
           <div class="w-full transition-transform duration-300 ease-out relative mt-[20px]">
             <div class="w-full flex flex-col justify-center items-center gap-4">
@@ -116,8 +119,8 @@ import ChatBox from '../components/ChatBox.vue';
 import { createSession, updateSessionTaskMode } from '../api/agent';
 import { showErrorToast } from '../utils/toast';
 import {
-  Github, Presentation, Globe, Palette, Gamepad2,
-  Telescope, ChartColumn, Image, FileText, ChevronDown, Check,
+  Github, Code2, Presentation, Globe, Palette, Terminal,
+  Telescope, ChartColumn, FileText, ChevronDown, Check,
 } from 'lucide-vue-next';
 import type { Component } from 'vue';
 import type { FileInfo } from '../api/file';
@@ -174,17 +177,17 @@ interface Suggestion {
 }
 
 const primarySuggestions: Suggestion[] = [
-  { label: 'Create slides', icon: Presentation },
-  { label: 'Build website', icon: Globe },
-  { label: 'Design', icon: Palette },
-  { label: 'Create games', icon: Gamepad2 },
+  { label: 'Build a website', icon: Globe },
+  { label: 'Debug code', icon: Terminal },
+  { label: 'Explain code', icon: FileText },
+  { label: 'Create a component', icon: Palette },
 ];
 
 const moreSuggestions: Suggestion[] = [
-  { label: 'Deep research', icon: Telescope },
-  { label: 'Analyze data', icon: ChartColumn },
-  { label: 'Generate image', icon: Image },
-  { label: 'Write report', icon: FileText },
+  { label: 'Write tests', icon: Presentation },
+  { label: 'Refactor code', icon: Code2 },
+  { label: 'Review changes', icon: Telescope },
+  { label: 'Build an API', icon: ChartColumn },
 ];
 
 const showMoreSuggestions = ref(false);

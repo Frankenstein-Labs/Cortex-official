@@ -22,8 +22,8 @@ function createSsoToken(user: { id: string; email?: string; name?: string }) {
 }
 
 export const metadata = {
-  title: "AI Manus | PearAI",
-  description: "L’agent AI Manus intégré à la plateforme PearAI.",
+  title: "Cortex Dev | Espace de développement",
+  description: "L’espace de développement assisté par IA Cortex Dev.",
 };
 
 export default async function AiManusPage() {
@@ -50,8 +50,8 @@ export default async function AiManusPage() {
       <div className="flex h-[calc(100vh-60px)] min-h-[680px] flex-col">
         <div className="border-white/10 flex items-center justify-between border-b bg-[#161616] px-4 py-2 text-sm">
           <div>
-            <span className="font-medium">AI Manus</span>
-            <span className="text-white/50 ml-2">Deuxième page de PearAI</span>
+            <span className="font-medium">Cortex Dev</span>
+            <span className="text-white/50 ml-2">Espace de développement</span>
           </div>
           <a
             href={aiManusUrl}
@@ -64,7 +64,7 @@ export default async function AiManusPage() {
           </a>
         </div>
         <iframe
-          title="AI Manus"
+          title="Cortex Dev"
           src={aiManusUrl}
           className="bg-white min-h-0 flex-1 border-0"
           allow="clipboard-read; clipboard-write; fullscreen"

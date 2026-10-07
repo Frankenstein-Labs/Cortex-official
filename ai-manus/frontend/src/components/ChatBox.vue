@@ -1,7 +1,7 @@
 <template>
-  <div class="pb-3 relative bg-[var(--background-gray-main)]">
+  <div class="pb-3 relative bg-[var(--background-gray-main)] cortex-dev-composer">
     <div
-      class="flex flex-col rounded-[22px] relative bg-[var(--background-menu-white)] py-3 w-full z-[2] gap-3 shadow-[0px_12px_32px_0px_rgba(0,0,0,0.02)] border border-black/8 dark:border-[var(--border-main)] focus-within:border focus-within:border-black/20 focus-within:dark:border-[var(--border-dark)]"
+      class="flex flex-col rounded-[22px] relative bg-[var(--background-menu-white)] py-3 w-full z-[2] gap-3 shadow-[0px_12px_32px_0px_rgba(0,0,0,0.02)] border border-black/8 dark:border-[var(--border-main)] focus-within:border focus-within:border-black/20 focus-within:dark:border-[var(--border-dark)] cortex-composer-shell"
     >
       <ChatBoxFiles ref="chatBoxFileListRef" :attachments="attachments"
         @update:attachments="emit('update:attachments', $event)" />

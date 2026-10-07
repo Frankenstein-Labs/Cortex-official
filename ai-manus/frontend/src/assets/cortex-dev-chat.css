@@ -1,0 +1,80 @@
+.cortex-workbench {
+  color: var(--text-primary);
+  background: var(--background-gray-main);
+}
+
+.cortex-workbench .cortex-panel-header {
+  background: var(--background-nav) !important;
+  border-bottom-color: var(--border-main) !important;
+}
+
+.cortex-agent-mark {
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-main);
+  border-radius: 6px;
+  color: var(--icon-brand);
+  background: var(--fill-tsp-white-main);
+}
+
+.cortex-agent-wordmark,
+.cortex-sidebar-brand-name {
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+.cortex-workbench .cortex-dev-composer {
+  padding-bottom: 12px;
+  background: transparent !important;
+}
+
+.cortex-workbench .cortex-composer-shell {
+  gap: 8px !important;
+  padding-top: 10px !important;
+  padding-bottom: 8px !important;
+  border: 1px solid var(--border-main) !important;
+  border-radius: 12px !important;
+  background: var(--background-white-main) !important;
+  box-shadow: 0 2px 10px rgb(0 0 0 / 5%) !important;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.cortex-workbench .cortex-composer-shell:focus-within {
+  border-color: var(--border-input-active) !important;
+  box-shadow: 0 0 0 1px var(--border-input-active) !important;
+}
+
+.cortex-workbench .cortex-composer-shell .chat-input-editor {
+  padding-inline: 14px;
+}
+
+.cortex-workbench .cortex-composer-shell .ProseMirror {
+  color: var(--text-primary);
+  outline: none;
+}
+
+.cortex-workbench .cortex-composer-shell button {
+  border-radius: 6px;
+}
+
+.cortex-workbench .cortex-user-message [data-chat-question-bubble] {
+  border: 1px solid var(--border-main) !important;
+  border-radius: 8px !important;
+  background: var(--fill-tsp-white-main) !important;
+}
+
+.cortex-workbench .cortex-assistant-message .limited-markdown-content pre {
+  border: 1px solid var(--border-main);
+  border-radius: 8px;
+}
+
+.cortex-sidebar-brand-name {
+  font-size: 16px;
+}
