@@ -8,7 +8,7 @@ on:
 
 jobs:
   build_and_test:
-    name: Build and Lint Next.js
+    name: Build, Lint, and Test All Sub-projects
     runs-on: ubuntu-latest
 
     steps:
@@ -21,11 +21,31 @@ jobs:
           node-version: 20
           cache: "yarn"
 
-      - name: Install dependencies
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install site dependencies
         run: yarn install --frozen-lockfile
 
-      - name: Lint code
+      - name: Lint Next.js application
         run: yarn lint
 
       - name: Build Next.js application
         run: yarn build
+
+      - name: Check Python backend compilation
+        run: yarn check:backend
+
+      - name: Install workspace dependencies
+        run: cd cortex-platform/frontend && npm ci
+
+      - name: Typecheck workspace application
+        run: yarn typecheck:workspace
+
+      - name: Run workspace tests
+        run: npm --prefix cortex-platform/frontend test -- --run
+
+      - name: Build workspace application
+        run: yarn build:workspace
