@@ -1,157 +1,66 @@
-<a name="readme-top"></a>
+# Cortex
 
-<div align="center">
-  <div align="center">
-    <img src="components/ui/PearHeroLogo.svg" alt="PearAI Logo" />
-  </div>
-  <h3 align="center">PearAI Landing Page</h3>
-  <p align="center">
-    The Open Source AI-powered code editor
-    <br />
-    <a href="https://trypear.ai"><strong>Explore the Website »</strong></a>
-    <br />
-    <br />
-    <a href="https://github.com/trypear/pear-landing-page/issues">Report Bug</a>
-    ·
-    <a href="https://github.com/trypear/pear-landing-page/issues">Request Feature</a>
-  </p>
-</div>
+Cortex is a browser-based AI workspace for software development. This repository contains the public Next.js site, the authenticated workspace shell, a Vue/Vite application and a FastAPI backend.
 
----
+## Repository layout
 
-## Table of Contents
+- `app/`, `components/`, `utils/`: Next.js site, authentication and workspace host.
+- `cortex-platform/frontend/`: Vue/Vite workspace UI.
+- `cortex-platform/backend/`: FastAPI API, agent orchestration and WebSocket routes.
+- `cortex-platform/sandbox/`: sandbox service used by the local Docker Compose stack.
+- `CORTEX_VERCEL_DEPLOYMENT.md`: Vercel Services architecture, environment variables and deployment blockers.
 
-- [About the Project](#about-the-project)
-  - [Built With](#built-with)
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-  - [Environment Variables](#environment-variables-description)
-- [Usage](#usage)
-- [Contributing](#contributing)
-- [Contact](#contact)
-- [Acknowledgements](#acknowledgements)
+## Architecture status
 
-## About The Project
+The web application currently uses the agent backend included in `cortex-platform/`. Rebranding the web application does **not** mean that the Cortex.dev editor extension runtime has already been ported into this server. The editor runtime and the web-agent backend are separate code paths; replacing the backend with the actual Cortex Agent runtime remains a distinct integration task.
 
-This is the landing page for [PearAI:](https://trypear.ai) the Open Source AI-powered code editor.
+## Local development
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+### Marketing site and account shell
 
-### Built With
+Requirements: Node.js 20+ and Yarn 1.22.
 
-- [![nextjs][nextjs]][nextjs-url]
-- [![vercel][vercel]][vercel-url]
-- [![tailwindcss][tailwindcss]][tailwindcss-url]
-- [![typescript][typescript]][typescripturl]
+```bash
+yarn install --frozen-lockfile
+cp .env.local.example .env.local
+yarn dev
+```
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+Open `http://localhost:3000`.
 
-## Getting Started
+### Agent workspace stack
 
-To get a local copy up and running follow these simple steps.
+Requirements: Docker and Docker Compose.
 
-### Prerequisites
+```bash
+cd cortex-platform
+cp .env.example .env
+# Set the model provider credentials and local secrets in .env.
+./dev.sh up
+```
 
-- Yarn
-  ```sh
-  npm install --global yarn
-  ```
+The local workspace frontend is served by Vite and the API by FastAPI. The Cortex site can host the workspace at `/workspace` when the services are configured together.
 
-### Installation
+## Environment variables
 
-1.  Clone the repo
-    ```sh
-    git clone https://github.com/trypear/pear-landing-page.git
-    ```
-2.  Install NPM packages
-    ```sh
-    yarn install
-    ```
-    <p align="right">(<a href="#readme-top">back to top</a>)</p>
+Do not commit `.env`, `.env.local`, API keys, database credentials, or signing secrets. Start from the checked-in examples and see the deployment guide for the full Vercel variable matrix.
 
-### Project Configuration
+For the web shell, configure at least:
 
-This project requires environment variables to be set up in a `.env.local` file for proper configuration and operation. Below are the required environment variables and instructions on how to set them up.
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `NEXT_PUBLIC_SITE_URL`
+- `CORTEX_SSO_SECRET` (same secret on the site and agent API)
 
-### Required Environment Variables
+The agent API also needs a model provider, MongoDB, Redis, JWT/session secrets and an isolated sandbox provider. The current Docker sandbox configuration is for local development; production deployment requires a Vercel Sandbox adapter or another isolated sandbox service.
 
-1. `NEXT_PUBLIC_SUPABASE_URL`
-2. `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+## Validation
 
-### Environment Variables Description
+```bash
+yarn lint
+cd cortex-platform/frontend && npm ci && npm run type-check && npm test -- --reporter=dot && npm run build
+```
 
-- **NEXT_PUBLIC_SUPABASE_URL**: This is the URL of your Supabase project.
+## Upstream and third-party notices
 
-  Example: `NEXT_PUBLIC_SUPABASE_URL=https://xyzcompany.supabase.co`
-
-- **NEXT_PUBLIC_SUPABASE_ANON_KEY**: This is the anonymous public key for your Supabase project. This key allows your frontend application to interact with the Supabase backend.
-
-  Example: `NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key`
-
-- **NEXT_PUBLIC_VERCEL_URL**: This is the URL to which users will be redirected after certain actions, such as authentication. During local development, this is typically `http://localhost:3000`. For Vercel preview/dev deployments, it will be whatever URL Vercel generates. For production, we should use `NEXT_PUBLIC_SITE_URL` instead. Both `NEXT_PUBLIC_SITE_URL` and `NEXT_PUBLIC_VERCEL_URL` are auto-generated by Vercel, so no need to worry about it.
-
-  Example: `NEXT_PUBLIC_REDIRECT_URL=http://localhost:3000`
-
-## Usage
-
-To run the project locally:
-
-1. Start the development server
-   ```sh
-   yarn dev
-   ```
-2. Visit `http://localhost:3000` in your browser.
-
-### Recommended Extensions
-
-- Prettier
-  - Open your command palette, choose your default formatter to be Prettier, and enable format on save.
-- ESLint
-  - When you push a commit, we have a pre-commit hook that automatically runs prettier, eslint, and builds your project to make sure everything is ok.
-- JavaScript and TypeScript Nightly
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-## Contributing
-
-Contributions are what make the open source community such an amazing place to be, learn, inspire, and create. Any contributions you make are **greatly appreciated**.
-
-If you have a suggestion that would make this better, please fork the repo and create a pull request.
-
-1. Fork the repo
-2. Clone the repo
-   ```sh
-   git clone https://github.com/<USERNAME>/pear-landing-page.git
-   ```
-3. Navigate to the project directory
-   ```sh
-   cd pear-landing-page
-   ```
-4. Create a new branch
-   ```sh
-   git checkout -b my-new-branch
-   ```
-5. Install dependencies
-   ```sh
-   yarn install
-   ```
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-## Contact
-
-- [Discord](https://discord.com/invite/7QMraJUsQt)
-- Email - pear@trypear.ai
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-[typescript]: https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white
-[typescripturl]: https://www.typescriptlang.org/
-[vercel]: https://img.shields.io/badge/Vercel-%23000000.svg?style=for-the-badge&logo=vercel&logoColor=white
-[vercel-url]: https://vercel.com/
-[nextjs]: https://img.shields.io/badge/Next.js-%23000000.svg?style=for-the-badge&logo=next.js&logoColor=white
-[nextjs-url]: https://nextjs.org/
-[tailwindcss]: https://img.shields.io/badge/Tailwind_CSS-%231a202c.svg?style=for-the-badge&logo=tailwind-css&logoColor=white
-[tailwindcss-url]: https://tailwindcss.com/
-[discord]: https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=discord&logoColor=white
+Some components in `cortex-platform/` originate from an independently licensed web-agent project. Preserve its `LICENSE` and notices when modifying or redistributing that code. The Cortex mark used by this site is copied from the Cortex Agent repository; see `THIRD_PARTY_NOTICES.md`.

@@ -12,6 +12,7 @@ import {
 import { CheckCircle2 } from "lucide-react";
 import { useTopUpCheckout } from "@/hooks/useTopUpCheckout";
 import { useUser } from "@/hooks/useUser";
+import Link from "next/link";
 
 import { STRIPE_PRICE_IDS } from "@/utils/constants";
 
@@ -59,7 +60,7 @@ export default function TopUpPage() {
               </h1>
               <p className="text-[#666666]">
                 Pay-as-you-go is temporarily paused. Top up credits never expire
-                and are only used after your Monthly PearAI credits are
+                and are only used after your monthly Cortex credits are
                 exhausted. Usage cost varies based on prompt size and LLM model
                 used.
               </p>
@@ -110,8 +111,9 @@ export default function TopUpPage() {
 
           <div className="mx-auto mt-8 flex max-w-3xl flex-col gap-4">
             <div className="mx-auto">
-              Please contact us on the PearAI Discord server if you have any
-              questions - we&apos;re here to help!
+              <Link href="/faq" className="text-primary-700 underline">
+                Questions about Cortex credits? See the FAQ.
+              </Link>
             </div>
             <div className="mx-auto flex w-full gap-6">
               <Button

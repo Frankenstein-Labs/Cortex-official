@@ -1,6 +1,7 @@
 import { MetadataRoute } from "next/types";
+import { getURL } from "@/lib/utils";
 
-const BASE_URL = "https://trypear.ai";
+const BASE_URL = getURL();
 
 const pages: Array<{
   route: string;

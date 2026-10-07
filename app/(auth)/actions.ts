@@ -12,10 +12,7 @@ import {
 import { UpdatePasswordFormData } from "@/utils/form-schema";
 import { getURL } from "@/lib/utils";
 
-export async function signin(
-  formData: FormData,
-  callbackForDesktopApp: string,
-) {
+export async function signin(formData: FormData) {
   const supabase = createClient();
 
   const data: SignInWithPasswordCredentials = {
@@ -24,7 +21,7 @@ export async function signin(
     options: { captchaToken: formData.get("captchaToken") as string },
   };
 
-  const { data: res, error } = await supabase.auth.signInWithPassword(data);
+  const { error } = await supabase.auth.signInWithPassword(data);
 
   if (error) {
     return { error: error.message };
@@ -32,33 +29,22 @@ export async function signin(
 
   revalidatePath("/", "layout");
 
-  if (callbackForDesktopApp && res) {
-    // if login in from desktop app
-    return redirect(
-      `/dashboard?callback=${encodeURIComponent(callbackForDesktopApp)}`,
-    );
-  }
-  redirect(`/ai-manus`);
+  redirect(`/workspace`);
 }
 
 // Flow: User signs up with email and password
 // 1. Check if user exists
 // 2. If user exists, attempt to sign in with email and password
-//  - If sign in is successful, return signedIn: true (redirect to /dashboard on client)
+//  - If sign in is successful, return signedIn: true (redirect to /workspace on client)
 //  - If sign in fails, return exists: true (toast 'account exists' on client and redirect to /signin)
 // 3. If user does not exist, sign up with email and password and redirect to /signin
 //  - If sign up fails, return error: error.message (toast error on client)
 
 // OAuth sign-in with Google or GitHub
-export async function signinWithOAuth(
-  provider: Provider,
-  callbackForDesktopApp: string | string[] = "",
-) {
+export async function signinWithOAuth(provider: Provider) {
   const supabase = createClient();
 
-  const redirectToUrl = callbackForDesktopApp
-    ? `${getURL()}/auth/callback?callback=${callbackForDesktopApp}`
-    : `${getURL()}/auth/callback`;
+  const redirectToUrl = `${getURL()}/auth/callback`;
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: provider,
@@ -118,7 +104,7 @@ export async function updateUser(formData: UpdatePasswordFormData) {
   }
 
   revalidatePath("/", "layout");
-  redirect("/ai-manus");
+  redirect("/workspace");
 }
 
 // resend confirmation email
@@ -129,7 +115,7 @@ export async function resendConfirmationEmail(email: string) {
     type: "signup",
     email: email,
     options: {
-      emailRedirectTo: `${getURL()}/ai-manus`,
+      emailRedirectTo: `${getURL()}/workspace`,
     },
   });
 

@@ -1,0 +1,59 @@
+services:
+  frontend:
+    image: ghcr.io/frankenstein-labs/cortex-frontend:latest
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - cortex-network
+    environment:
+      - BACKEND_URL=http://backend:8000
+
+  backend:
+    image: ghcr.io/frankenstein-labs/cortex-backend:latest
+    depends_on:
+      - sandbox
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      #- ./mcp.json:/etc/mcp.json # Mount MCP servers directory
+    networks:
+      - cortex-network
+    env_file:
+      # All configuration is loaded from the .env file, see .env.example
+      # More configuration options: https://github.com/Frankenstein-Labs/Cortex-official/tree/main/cortex-platform/docs
+      - .env
+
+  sandbox:
+    image: ghcr.io/frankenstein-labs/cortex-sandbox:latest
+    command: /bin/sh -c "exit 0"  # prevent sandbox from starting, ensure image is pulled
+    restart: "no"
+    networks:
+      - cortex-network
+
+  mongodb:
+    image: mongo:7.0
+    volumes:
+      - mongodb_data:/data/db
+    restart: unless-stopped
+    #ports:
+    #  - "27017:27017"
+    networks:
+      - cortex-network
+
+  redis:
+    image: redis:7.0
+    restart: unless-stopped
+    networks:
+      - cortex-network
+
+volumes:
+  mongodb_data:
+    name: cortex-mongodb-data
+
+networks:
+  cortex-network:
+    name: cortex-network
+    driver: bridge

@@ -4,7 +4,7 @@ import { createClient } from "@/utils/supabase/server";
 import { User } from "@supabase/supabase-js";
 import { TEST_MODE_ENABLED } from "@/utils/constants";
 
-const PEARAI_SERVER_URL = process.env.PEARAI_SERVER_URL;
+const CORTEX_BILLING_API_URL = process.env.CORTEX_BILLING_API_URL;
 
 async function createCheckoutSession(request: NextRequest & { user: User }) {
   const supabase = createClient();
@@ -44,7 +44,7 @@ async function createCheckoutSession(request: NextRequest & { user: User }) {
       return NextResponse.json(
         {
           error:
-            "Error checking user existing subscription. Please contact PearAI team.",
+            "Error checking user existing subscription. Please contact Cortex team.",
         },
         { status: 500 },
       );
@@ -58,7 +58,7 @@ async function createCheckoutSession(request: NextRequest & { user: User }) {
 
     // Create checkout session
     const token = session.access_token;
-    const url = `${PEARAI_SERVER_URL}/payment${TEST_MODE_ENABLED ? "/test" : ""}/create-checkout-session`;
+    const url = `${CORTEX_BILLING_API_URL}/payment${TEST_MODE_ENABLED ? "/test" : ""}/create-checkout-session`;
 
     const response = await fetch(url, {
       method: "POST",

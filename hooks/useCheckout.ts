@@ -9,7 +9,7 @@ export const useCheckout = (user: User | null) => {
 
   const handleCheckout = async (priceId: string) => {
     if (!user) {
-      toast.error("Please log in to subscribe to this plan.");
+      toast.error("Sign in to choose a Cortex plan.");
       router.push("/signin");
       return;
     }

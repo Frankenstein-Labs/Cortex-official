@@ -4,8 +4,9 @@ import React from "react";
 import FAQComponent from "@/components/faq";
 
 export const metadata: Metadata = constructMetadata({
-  title: "FAQ",
-  description: "Frequently Asked Questions",
+  title: "Frequently asked questions",
+  description:
+    "Answers about the Cortex AI workspace, data handling and deployment.",
   canonical: "/faq",
 });
 

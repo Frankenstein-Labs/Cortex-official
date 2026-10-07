@@ -7,7 +7,7 @@ export default async function Verification() {
   const { data } = await supabase.auth.getUser();
 
   if (data?.user) {
-    redirect("/ai-manus");
+    redirect("/workspace");
   }
   return (
     <>

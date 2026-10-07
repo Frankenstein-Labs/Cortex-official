@@ -26,8 +26,8 @@ export default function DashboardSuccess() {
               annual.
             </p>
           </div>
-          <Link href="/dashboard">
-            <Button className="w-full">Return to Dashboard</Button>
+          <Link href="/workspace">
+            <Button className="w-full">Continue to Cortex Workspace</Button>
           </Link>
         </CardContent>
       </Card>

@@ -5,7 +5,7 @@ import { createClient } from "@/utils/supabase/server";
 
 export const metadata: Metadata = constructMetadata({
   title: "Pricing",
-  description: "The pricing and download page for PearAI.",
+  description: "Plans and workspace access for Cortex.",
   canonical: "/pricing",
 });
 

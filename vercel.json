@@ -1,8 +1,62 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "site": {
+      "root": ".",
+      "framework": "nextjs"
+    },
+    "workspace": {
+      "root": "cortex-platform/frontend",
+      "framework": "vite",
+      "installCommand": "npm ci",
+      "buildCommand": "npm run build",
+      "outputDirectory": "dist",
+      "rewrites": [
+        {
+          "source": "/:path*",
+          "has": [{ "type": "header", "key": "accept", "value": "text/html" }],
+          "destination": "/index.html"
+        }
+      ]
+    },
+    "agent_api": {
+      "root": "cortex-platform/backend",
+      "framework": "fastapi",
+      "entrypoint": "app.main:app"
+    }
+  },
   "rewrites": [
     {
-      "source": "/docs/:path*",
-      "destination": "https://documentation-page-pearai-landing-chi.vercel.app/:path*"
+      "source": "/api/v1",
+      "destination": {
+        "service": "agent_api"
+      }
+    },
+    {
+      "source": "/api/v1/(.*)",
+      "destination": {
+        "service": "agent_api"
+      }
+    },
+    {
+      "source": "/studio",
+      "destination": {
+        "service": "workspace",
+        "path": "/"
+      }
+    },
+    {
+      "source": "/studio/:path*",
+      "destination": {
+        "service": "workspace",
+        "path": "/:path*"
+      }
+    },
+    {
+      "source": "/(.*)",
+      "destination": {
+        "service": "site"
+      }
     }
   ]
 }

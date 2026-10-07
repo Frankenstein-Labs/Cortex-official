@@ -9,6 +9,19 @@ import dynamic from "next/dynamic";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ThemeProvider } from "next-themes";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: {
+    default: "Cortex — AI workspace for software",
+    template: "%s | Cortex",
+  },
+  description:
+    "A browser-based AI workspace for conversations, project context and development tools.",
+  icons: {
+    icon: "/icons/cortex-mark.svg",
+  },
+};
 
 const PostHogPageView = dynamic(() => import("./PostHogPageView"), {
   ssr: false,

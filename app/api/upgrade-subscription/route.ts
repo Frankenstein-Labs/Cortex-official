@@ -4,7 +4,7 @@ import { withAuth } from "@/utils/withAuth";
 import { User } from "@supabase/supabase-js";
 import { NextResponse, NextRequest } from "next/server";
 
-const PEARAI_SERVER_URL = process.env.PEARAI_SERVER_URL;
+const CORTEX_BILLING_API_URL = process.env.CORTEX_BILLING_API_URL;
 
 async function upgradeSubscription(request: NextRequest & { user: User }) {
   const supabase = createClient();
@@ -22,7 +22,7 @@ async function upgradeSubscription(request: NextRequest & { user: User }) {
     }
 
     const token = session.access_token;
-    const url = `${PEARAI_SERVER_URL}/payment/update-subscription`;
+    const url = `${CORTEX_BILLING_API_URL}/payment/update-subscription`;
 
     const { subscriptionId } = await request.json();
     const response = await fetch(url, {
