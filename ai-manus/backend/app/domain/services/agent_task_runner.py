@@ -1,0 +1,571 @@
+from typing import Any, Dict, Optional, AsyncGenerator, List, Type
+import asyncio
+import logging
+import os
+import debugpy
+from pydantic import TypeAdapter
+from app.domain.models.message import Message, RequiredSkill, LLMMessage, Role
+from app.domain.models.event import (
+    BaseEvent,
+    ErrorEvent,
+    TitleEvent,
+    MessageEvent,
+    DoneEvent,
+    ToolEvent,
+    WaitEvent,
+    FileToolContent,
+    ShellToolContent,
+    SearchToolContent,
+    BrowserToolContent,
+    ToolStatus,
+    AgentEvent,
+    McpToolContent,
+    TerminalUpdateEvent,
+    FileUpdateEvent,
+)
+from app.domain.services.flows.plan_act import PlanActFlow
+from app.domain.external.sandbox import Sandbox
+from app.domain.external.browser import Browser
+from app.domain.external.search import SearchEngine
+from app.domain.external.file import FileStorage
+from app.domain.external.llm import LLM
+from app.domain.repositories.agent_repository import AgentRepository
+from app.domain.external.task import TaskRunner, TaskRunnerFactory, Task
+from app.domain.repositories.session_repository import SessionRepository
+from app.domain.repositories.mcp_repository import MCPRepository
+from app.domain.repositories.project_repository import ProjectRepository
+from app.domain.models.session import SessionStatus, TaskMode
+from app.domain.models.file import FileInfo
+from app.domain.services.tools.mcp import MCPToolkit
+from app.domain.models.tool_result import ToolResult
+from app.domain.models.search import SearchResults
+from app.domain.services.prompts.system import format_project_instructions
+from app.application.services.skill_runtime_service import SkillRuntimeService
+
+logger = logging.getLogger(__name__)
+
+
+def _required_skills_from_event(event: MessageEvent) -> List[RequiredSkill]:
+    if not event.required_skills:
+        return []
+    out: List[RequiredSkill] = []
+    for item in event.required_skills:
+        if not isinstance(item, dict):
+            continue
+        skill_id = str(item.get("id") or item.get("skill_id") or "").strip()
+        name = str(item.get("name") or "").strip().lstrip("/")
+        if skill_id and name:
+            out.append(RequiredSkill(skill_id=skill_id, name=name))
+    return out
+
+class AgentTaskRunner(TaskRunner):
+    """Agent task that can be cancelled"""
+    def __init__(
+        self,
+        session_id: str,
+        agent_id: str,
+        user_id: str,
+        sandbox: Sandbox,
+        browser: Browser,
+        agent_repository: AgentRepository,
+        session_repository: SessionRepository,
+        file_storage: FileStorage,
+        mcp_repository: MCPRepository,
+        llm: LLM,
+        search_engine: Optional[SearchEngine] = None,
+        project_repository: Optional[ProjectRepository] = None,
+        skill_runtime_service: Optional[SkillRuntimeService] = None,
+    ):
+        self._session_id = session_id
+        self._agent_id = agent_id
+        self._user_id = user_id
+        self._sandbox = sandbox
+        self._browser = browser
+        self._search_engine = search_engine
+        self._repository = agent_repository
+        self._session_repository = session_repository
+        self._file_storage = file_storage
+        self._mcp_repository = mcp_repository
+        self._project_repository = project_repository
+        self._skill_runtime_service = skill_runtime_service
+        self._llm = llm
+        self._mcp_tool = MCPToolkit()
+        self._flow = PlanActFlow(
+            self._agent_id,
+            self._repository,
+            self._session_id,
+            self._session_repository,
+            self._sandbox,
+            self._browser,
+            self._mcp_tool,
+            self._llm,
+            self._search_engine,
+            project_repository=self._project_repository,
+        )
+        # Snapshot file contents before mutating file tools (for Diff/Original views).
+        self._file_old_by_call: Dict[str, str] = {}
+
+    async def _resolve_project_instruction(self, project_id: Optional[str]) -> Optional[str]:
+        if not project_id or not self._project_repository:
+            return None
+        project = await self._project_repository.find_by_id(project_id)
+        if not project:
+            return None
+        text = (project.instruction or "").strip()
+        return text or None
+
+    async def _put_and_add_event(self, task: Task, event: AgentEvent) -> None:
+        event_id = await task.output_stream.put(event.model_dump_json())
+        event.id = event_id
+        # Live computer-panel updates — stream only (avoid bloating session.events)
+        if isinstance(event, (TerminalUpdateEvent, FileUpdateEvent)):
+            return
+        await self._session_repository.add_event(self._session_id, event)
+    
+    async def _pop_event(self, task: Task) -> AgentEvent:
+        event_id, event_str = await task.input_stream.pop()
+        if event_str is None:
+            logger.warning(f"Agent {self._agent_id} received empty message")
+            return
+        event = TypeAdapter(AgentEvent).validate_json(event_str)
+        event.id = event_id
+        return event
+    
+    async def _get_browser_screenshot(self) -> str:
+        screenshot = await self._browser.screenshot()
+        result = await self._file_storage.upload_file(screenshot, "screenshot.png", self._user_id)
+        return result.file_id
+
+    async def _sync_file_to_storage(self, file_path: str) -> Optional[FileInfo]:
+        """Upload or update file and return FileInfo"""
+        try:
+            file_info = await self._session_repository.get_file_by_path(self._session_id, file_path)
+            file_data = await self._sandbox.file_download(file_path)
+            if file_info:
+                await self._session_repository.remove_file(self._session_id, file_info.file_id)
+            file_name = file_path.split("/")[-1]
+            file_info = await self._file_storage.upload_file(file_data, file_name, self._user_id)
+            file_info.file_path = file_path
+            await self._session_repository.add_file(self._session_id, file_info)
+            return file_info
+        except Exception as e:
+            logger.exception(f"Agent {self._agent_id} failed to sync file: {e}")
+    
+    async def _sync_file_to_sandbox(self, file_id: str) -> Optional[FileInfo]:
+        """Download file from storage to sandbox"""
+        try:
+            file_data, file_info = await self._file_storage.download_file(file_id, self._user_id)
+            file_path = "/home/ubuntu/upload/" + file_info.filename
+            result = await self._sandbox.file_upload(file_data, file_path)
+            if result.success:
+                file_info.file_path = file_path
+                return file_info
+        except Exception as e:
+            logger.exception(f"Agent {self._agent_id} failed to sync file: {e}")
+
+    async def _sync_message_attachments_to_storage(self, event: MessageEvent) -> None:
+        """Sync message attachments and update event attachments"""
+        attachments: List[FileInfo] = []
+        try:
+            if event.attachments:
+                for attachment in event.attachments:
+                    file_info = await self._sync_file_to_storage(attachment.file_path)
+                    if file_info:
+                        attachments.append(file_info)
+            event.attachments = attachments
+        except Exception as e:
+            logger.exception(f"Agent {self._agent_id} failed to sync attachments to storage: {e}")
+    
+    async def _sync_message_attachments_to_sandbox(self, event: MessageEvent) -> None:
+        """Sync message attachments and update event attachments"""
+        attachments: List[FileInfo] = []
+        try:
+            if event.attachments:
+                for attachment in event.attachments:
+                    file_info = await self._sync_file_to_sandbox(attachment.file_id)
+                    if file_info:
+                        attachments.append(file_info)
+                        await self._session_repository.add_file(self._session_id, file_info)
+            event.attachments = attachments
+        except Exception as e:
+            logger.exception(f"Agent {self._agent_id} failed to sync attachments to event: {e}")
+    
+
+    # TODO: refactor this function
+    async def _handle_tool_event(self, event: ToolEvent):
+        """Generate tool content"""
+        try:
+            # Capture pre-write file content so the UI can show Diff / Original.
+            if (
+                event.status == ToolStatus.CALLING
+                and event.tool_name == "file"
+                and event.function_name in ("file_write", "file_str_replace")
+                and "file" in event.function_args
+            ):
+                try:
+                    file_path = event.function_args["file"]
+                    prior = await self._sandbox.file_read(file_path, max_length=None)
+                    if prior and prior.success and isinstance(prior.data, dict):
+                        self._file_old_by_call[event.tool_call_id] = prior.data.get("content", "") or ""
+                except Exception:
+                    # New file / missing file — no original content.
+                    logger.debug(
+                        f"Agent {self._agent_id} no prior content for {event.function_args.get('file')}"
+                    )
+
+            if event.status == ToolStatus.CALLED:
+                if event.tool_name == "browser":
+                    event.tool_content = BrowserToolContent(screenshot=await self._get_browser_screenshot())
+                elif event.tool_name == "search":
+                    search_results: ToolResult[SearchResults] = event.function_result
+                    logger.debug(f"Search tool results: {search_results}")
+                    event.tool_content = SearchToolContent(results=search_results.data.results)
+                elif event.tool_name == "shell":
+                    if "id" in event.function_args:
+                        shell_result = await self._sandbox.view_shell(event.function_args["id"], console=True)
+                        event.tool_content = ShellToolContent(console=shell_result.data.get("console", []))
+                    else:
+                        event.tool_content = ShellToolContent(console="(No Console)")
+                elif event.tool_name == "file":
+                    if "file" in event.function_args:
+                        file_path = event.function_args["file"]
+                        # Full content for Computer panel / Diff — agent tool reads stay capped.
+                        file_read_result = await self._sandbox.file_read(file_path, max_length=None)
+                        file_content: str = file_read_result.data.get("content", "")
+                        old_content = self._file_old_by_call.pop(event.tool_call_id, None)
+                        # Only expose old_content when there was a prior snapshot (enables Diff tabs).
+                        event.tool_content = FileToolContent(
+                            content=file_content,
+                            old_content=old_content,
+                        )
+                        await self._sync_file_to_storage(file_path)
+                    else:
+                        event.tool_content = FileToolContent(content="(No Content)")
+                elif event.tool_name == "skill":
+                    # Progressive disclosure: reuse FileToolView with SKILL.md path + body.
+                    data = {}
+                    result = event.function_result
+                    if result is not None and getattr(result, "data", None) is not None:
+                        if isinstance(result.data, dict):
+                            data = result.data
+                    content = data.get("content") or (
+                        (result.message if result and not getattr(result, "success", True) else None)
+                        or "(No Content)"
+                    )
+                    file_path = data.get("file") or ""
+                    if not file_path:
+                        skill_name = (event.function_args or {}).get("name") or data.get("name") or ""
+                        if skill_name:
+                            from app.domain.skills.package import skill_md_path
+
+                            file_path = skill_md_path(str(skill_name).lstrip("/"))
+                    if file_path:
+                        event.function_args = {**(event.function_args or {}), "file": file_path}
+                    event.tool_content = FileToolContent(content=content)
+                elif event.tool_name == "mcp":
+                    logger.debug(f"Processing MCP tool event: function_result={event.function_result}")
+                    if event.function_result:
+                        if hasattr(event.function_result, 'data') and event.function_result.data:
+                            logger.debug(f"MCP tool result data: {event.function_result.data}")
+                            event.tool_content = McpToolContent(result=event.function_result.data)
+                        elif hasattr(event.function_result, 'success') and event.function_result.success:
+                            logger.debug(f"MCP tool result (success, no data): {event.function_result}")
+                            result_data = event.function_result.model_dump() if hasattr(event.function_result, 'model_dump') else str(event.function_result)
+                            event.tool_content = McpToolContent(result=result_data)
+                        else:
+                            logger.debug(f"MCP tool result (fallback): {event.function_result}")
+                            event.tool_content = McpToolContent(result=str(event.function_result))
+                    else:
+                        logger.warning("MCP tool: No function_result found")
+                        event.tool_content = McpToolContent(result="No result available")
+                    
+                    logger.debug(f"MCP tool_content set to: {event.tool_content}")
+                    if event.tool_content:
+                        logger.debug(f"MCP tool_content.result: {event.tool_content.result}")
+                        logger.debug(f"MCP tool_content dict: {event.tool_content.model_dump()}")
+                else:
+                    logger.warning(f"Agent {self._agent_id} received unknown tool event: {event.tool_name}")
+        except Exception as e:
+            logger.exception(f"Agent {self._agent_id} failed to generate tool content: {e}")
+
+    async def run(self, task: Task) -> None:
+        """Process agent's message queue and run the agent's flow"""
+        try:
+            logger.info(f"Agent {self._agent_id} message processing task started")
+
+            while not await task.input_stream.is_empty():
+                session = await self._session_repository.find_by_id(self._session_id)
+                is_chat = bool(session and session.task_mode == TaskMode.CHAT)
+
+                if not is_chat:
+                    await self._sandbox.ensure_sandbox()
+                    await self._mcp_tool.initialized(await self._mcp_repository.get_mcp_config())
+                    if self._skill_runtime_service:
+                        await self._skill_runtime_service.sync_enabled_skills_to_sandbox(
+                            self._user_id, self._sandbox
+                        )
+
+                event = await self._pop_event(task)
+                message = ""
+                if isinstance(event, MessageEvent):
+                    message = event.message or ""
+                    if not is_chat:
+                        await self._sync_message_attachments_to_sandbox(event)
+                    
+                logger.info(f"Agent {self._agent_id} received new message: {message[:50]}...")
+
+                message_obj = Message(
+                    message=message,
+                    attachments=[
+                        attachment.file_path
+                        for attachment in (event.attachments or [])
+                        if attachment.file_path
+                    ],
+                    required_skills=_required_skills_from_event(event),
+                )
+                if self._skill_runtime_service:
+                    message_obj = await self._skill_runtime_service.resolve_message(
+                        self._user_id, message_obj
+                    )
+                
+                flow = self._run_chat(message_obj) if is_chat else self._run_flow(message_obj)
+                async for event in flow:
+                    # Flip WAITING before streaming WaitEvent so consumers that
+                    # read Mongo for the trailing status_update do not see RUNNING.
+                    if isinstance(event, WaitEvent):
+                        await self._session_repository.update_status(
+                            self._session_id, SessionStatus.WAITING
+                        )
+                        await self._put_and_add_event(task, event)
+                        return
+                    await self._put_and_add_event(task, event)
+                    if isinstance(event, TitleEvent):
+                        await self._session_repository.update_title(self._session_id, event.title)
+                    elif isinstance(event, MessageEvent):
+                        await self._session_repository.update_latest_message(self._session_id, event.message, event.timestamp)
+                        await self._session_repository.increment_unread_message_count(self._session_id)
+                    if not await task.input_stream.is_empty():
+                        break
+
+            await self._session_repository.update_status(self._session_id, SessionStatus.COMPLETED)
+        except asyncio.CancelledError:
+            logger.info(f"Agent {self._agent_id} task cancelled")
+            await self._put_and_add_event(task, DoneEvent())
+            await self._session_repository.update_status(self._session_id, SessionStatus.COMPLETED)
+        except Exception as e:
+            logger.exception(f"Agent {self._agent_id} task encountered exception: {str(e)}")
+            
+            # If debugger is attached, trigger breakpoint for debugging
+            # You can also manually set ENABLE_DEBUG_BREAK=1 environment variable
+            if debugpy.is_client_connected() or os.getenv('ENABLE_DEBUG_BREAK'):
+                logger.debug("Debugger detected, triggering breakpoint")
+                import traceback
+                traceback.print_exc()
+                debugpy.breakpoint()  # This will pause execution if a debugger is attached
+            
+            await self._put_and_add_event(task, ErrorEvent(error=f"Task error: {str(e)}"))
+            await self._session_repository.update_status(self._session_id, SessionStatus.COMPLETED)
+    
+    async def _run_chat(self, message: Message) -> AsyncGenerator[BaseEvent, None]:
+        """Lightweight Chat mode: single LLM reply without tools / plan-act."""
+        if not message.message:
+            logger.warning(f"Agent {self._agent_id} received empty message in chat mode")
+            yield ErrorEvent(error="No message")
+            return
+
+        session = await self._session_repository.find_by_id(self._session_id)
+        system_content = (
+            "You are Manus, a helpful AI assistant in Chat mode. "
+            "Answer the user's questions clearly and concisely. "
+            "You do not have access to tools, a computer, or the internet."
+        )
+        project_instruction = await self._resolve_project_instruction(
+            session.project_id if session else None
+        )
+        project_section = format_project_instructions(project_instruction)
+        if project_section:
+            system_content = f"{system_content}\n\n{project_section}"
+        if self._skill_runtime_service:
+            catalog = await self._skill_runtime_service.build_skill_catalog_section(
+                self._user_id
+            )
+            if catalog:
+                system_content = f"{system_content}\n\n{catalog}"
+            skill_marker = self._skill_runtime_service.format_chat_system_skill(message)
+            if skill_marker:
+                system_content = f"{system_content}\n\n{skill_marker}"
+
+        history: List[LLMMessage] = [
+            LLMMessage(
+                role=Role.SYSTEM,
+                content=system_content,
+            )
+        ]
+        for ev in (session.events if session else []) or []:
+            if isinstance(ev, MessageEvent) and ev.message:
+                role = Role.USER if ev.role == "user" else Role.ASSISTANT
+                history.append(LLMMessage(role=role, content=ev.message))
+
+        reply = await self._llm.ask(history)
+        content = (reply.content or "").strip() or "(No response)"
+
+        if session and not session.title:
+            title = message.message.strip().replace("\n", " ")[:50]
+            if title:
+                yield TitleEvent(title=title)
+
+        yield MessageEvent(role="assistant", message=content)
+        yield DoneEvent()
+        logger.info(f"Agent {self._agent_id} completed chat-mode reply")
+
+    async def _run_flow(self, message: Message) -> AsyncGenerator[BaseEvent, None]:
+        """Process a single message through the agent's flow and yield events"""
+        if self._skill_runtime_service:
+            pairs = await self._skill_runtime_service.list_enabled_skill_pairs(
+                self._user_id
+            )
+            bodies = await self._skill_runtime_service.build_enabled_skill_bodies(
+                self._user_id
+            )
+            self._flow.set_enabled_skills(pairs, bodies)
+            catalog = await self._skill_runtime_service.build_skill_catalog_section(
+                self._user_id
+            )
+            self._flow.set_skill_catalog(catalog or None)
+        if not message.message:
+            logger.warning(f"Agent {self._agent_id} received empty message")
+            yield ErrorEvent(error="No message")
+            return
+
+        async for event in self._flow.run(message):
+            if isinstance(event, ToolEvent):
+                # TODO: move to tool function
+                await self._handle_tool_event(event)
+                yield event
+                # Official: terminalUpdate / text_editor file panel push after tool settles
+                if event.status == ToolStatus.CALLED:
+                    if event.tool_name == "shell" and event.function_args.get("id"):
+                        console = None
+                        if isinstance(event.tool_content, ShellToolContent):
+                            console = event.tool_content.console
+                        yield TerminalUpdateEvent(
+                            shell_id=event.function_args["id"],
+                            output=console if console is not None else [],
+                        )
+                    elif (
+                        event.tool_name in ("file", "skill")
+                        and event.function_args.get("file")
+                    ):
+                        path = event.function_args["file"]
+                        content = ""
+                        old_content = None
+                        if isinstance(event.tool_content, FileToolContent):
+                            content = event.tool_content.content or ""
+                            old_content = event.tool_content.old_content
+                        file_info = await self._session_repository.get_file_by_path(
+                            self._session_id, path
+                        )
+                        yield FileUpdateEvent(
+                            path=path,
+                            content=content,
+                            old_content=old_content,
+                            file=file_info,
+                        )
+            elif isinstance(event, MessageEvent):
+                await self._sync_message_attachments_to_storage(event)
+                yield event
+            elif isinstance(event, TerminalUpdateEvent):
+                # Already emitted from BaseAgent live poll
+                yield event
+            else:
+                yield event
+
+        logger.info(f"Agent {self._agent_id} completed processing one message")
+
+    
+    async def on_done(self, task: Task) -> None:
+        """Called when the task is done"""
+        logger.info(f"Agent {self._agent_id} task done")
+
+
+    async def destroy(self) -> None:
+        """Destroy the task and release resources"""
+        logger.info("Starting to destroy agent task")
+        
+        # Destroy sandbox environment
+        if self._sandbox:
+            logger.debug(f"Destroying Agent {self._agent_id}'s sandbox environment")
+            await self._sandbox.destroy()
+        
+        if self._mcp_tool:
+            logger.debug(f"Destroying Agent {self._agent_id}'s MCP tool")
+            await self._mcp_tool.cleanup()
+        
+        logger.debug(f"Agent {self._agent_id} has been fully closed and resources cleared")
+
+
+class AgentTaskRunnerFactory(TaskRunnerFactory):
+    """Rebuilds an AgentTaskRunner from serializable parameters.
+
+    Task backends only carry JSON-serializable parameters (session_id,
+    agent_id, user_id, sandbox_id) between the process that creates a task
+    and the process that executes it. This factory reconstructs the runner
+    with live dependencies (sandbox, browser, repositories) on the execution
+    side, which may be the API process (local backend) or a worker process
+    (e.g. Celery backend).
+    """
+
+    def __init__(
+        self,
+        agent_repository: AgentRepository,
+        session_repository: SessionRepository,
+        sandbox_cls: Type[Sandbox],
+        file_storage: FileStorage,
+        mcp_repository: MCPRepository,
+        llm: LLM,
+        search_engine: Optional[SearchEngine] = None,
+        project_repository: Optional[ProjectRepository] = None,
+        skill_runtime_service: Optional[SkillRuntimeService] = None,
+    ):
+        self._agent_repository = agent_repository
+        self._session_repository = session_repository
+        self._sandbox_cls = sandbox_cls
+        self._file_storage = file_storage
+        self._mcp_repository = mcp_repository
+        self._llm = llm
+        self._search_engine = search_engine
+        self._project_repository = project_repository
+        self._skill_runtime_service = skill_runtime_service
+
+    @staticmethod
+    def build_params(session_id: str, agent_id: str, user_id: str, sandbox_id: str) -> Dict[str, Any]:
+        return {
+            "session_id": session_id,
+            "agent_id": agent_id,
+            "user_id": user_id,
+            "sandbox_id": sandbox_id,
+        }
+
+    async def create_runner(self, params: Dict[str, Any]) -> AgentTaskRunner:
+        sandbox_id = params["sandbox_id"]
+        sandbox = await self._sandbox_cls.get(sandbox_id)
+        if not sandbox:
+            raise RuntimeError(f"Sandbox {sandbox_id} not found")
+        browser = await sandbox.get_browser()
+        if not browser:
+            raise RuntimeError(f"Failed to get browser for Sandbox {sandbox_id}")
+        return AgentTaskRunner(
+            session_id=params["session_id"],
+            agent_id=params["agent_id"],
+            user_id=params["user_id"],
+            sandbox=sandbox,
+            browser=browser,
+            agent_repository=self._agent_repository,
+            session_repository=self._session_repository,
+            file_storage=self._file_storage,
+            mcp_repository=self._mcp_repository,
+            llm=self._llm,
+            search_engine=self._search_engine,
+            project_repository=self._project_repository,
+            skill_runtime_service=self._skill_runtime_service,
+        )

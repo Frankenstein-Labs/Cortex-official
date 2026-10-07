@@ -144,6 +144,7 @@ export default async function Header() {
                   </ul>
                 </DropdownNavItem>
                 <NavItem href="/pricing">Pricing</NavItem>
+                <NavItem href="/ai-manus">AI Manus</NavItem>
                 <NavItem
                   href="https://github.com/trypear/pearai-master"
                   target="_blank"

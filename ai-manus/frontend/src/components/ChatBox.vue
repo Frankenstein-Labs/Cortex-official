@@ -1,0 +1,460 @@
+<template>
+  <div class="pb-3 relative bg-[var(--background-gray-main)]">
+    <div
+      class="flex flex-col rounded-[22px] relative bg-[var(--background-menu-white)] py-3 w-full z-[2] gap-3 shadow-[0px_12px_32px_0px_rgba(0,0,0,0.02)] border border-black/8 dark:border-[var(--border-main)] focus-within:border focus-within:border-black/20 focus-within:dark:border-[var(--border-dark)]"
+    >
+      <ChatBoxFiles ref="chatBoxFileListRef" :attachments="attachments"
+        @update:attachments="emit('update:attachments', $event)" />
+      <div
+        class="chat-input-editor overflow-auto ps-4 pe-2 bg-transparent pt-[1px] border-0 focus-visible:ring-0 focus-visible:ring-offset-0 w-full placeholder:text-[var(--text-disable)] text-[15px] leading-[24px] max-h-[216px]"
+        :class="dense ? 'min-h-[28px]' : 'min-h-[50px]'"
+      >
+        <EditorContent :editor="editor" />
+      </div>
+      <div class="flex gap-1.5 px-3 items-center">
+        <div class="relative" ref="plusMenuRef">
+          <button type="button" @click="showPlusMenu = !showPlusMenu"
+            class="rounded-full border border-[var(--border-main)] inline-flex items-center justify-center gap-1 clickable cursor-pointer text-xs text-[var(--text-secondary)] hover:bg-[var(--fill-tsp-white-light)] w-8 h-8 p-0"
+            :title="t('Add files and more')"
+            aria-expanded="false" aria-haspopup="dialog">
+            <Plus :size="17" />
+          </button>
+          <ChatBoxPlusMenu
+            :open="showPlusMenu"
+            :position-style="plusMenuPositionStyle"
+            @add-local-files="runAddLocalFiles"
+            @select-skill="insertSkillTag"
+            @add-skill="handlePlusAddSkill"
+            @manage-skills="handlePlusManageSkills"
+            @close="showPlusMenu = false"
+          />
+        </div>
+        <template v-for="variant in plusSkillDialogVariants" :key="variant">
+          <SkillsPlaceholderDialog
+            v-if="plusSkillDialogOpen[variant]"
+            v-model:open="plusSkillDialogOpen[variant]"
+            :variant="variant"
+          />
+        </template>
+        <div class="flex gap-1.5 ml-auto items-center">
+          <button v-if="!isRunning || sendEnabled || hideStopButton"
+            class="inline-flex items-center justify-center whitespace-nowrap font-medium transition-colors text-sm rounded-full p-0 w-8 h-8 min-w-0 hover:opacity-90"
+            :class="!sendEnabled ? 'cursor-not-allowed bg-[var(--fill-tsp-white-dark)] hover:opacity-100' : 'cursor-pointer bg-[var(--Button-primary-black)]'"
+            @click="handleSubmit">
+            <SendIcon :disabled="!sendEnabled" />
+          </button>
+          <button v-else-if="!hideStopButton" @click="handleStop"
+            class="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-colors bg-[var(--Button-primary-black)] text-[var(--text-onblack)] gap-[4px] hover:opacity-90 rounded-full p-0 w-8 h-8">
+            <div class="w-[10px] h-[10px] bg-[var(--icon-onblack)] rounded-[2px]">
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+    <ChatBoxSlashMenu
+      :open="slashMenuOpen"
+      :items="slashMenuItems"
+      :position-style="slashPositionStyle"
+      :active-index="slashActiveIndex"
+      test-id="chatbox-slash-menu"
+      @select="handleSlashSelect"
+    />
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, watch, computed, reactive, onMounted, onUnmounted, onBeforeUnmount } from 'vue'
+import { useEditor, EditorContent } from '@tiptap/vue-3'
+import StarterKit from '@tiptap/starter-kit'
+import Placeholder from '@tiptap/extension-placeholder'
+import type { SuggestionProps } from '@tiptap/suggestion'
+import SendIcon from './icons/SendIcon.vue'
+import { useI18n } from 'vue-i18n'
+import ChatBoxFiles from './ChatBoxFiles.vue'
+import ChatBoxSlashMenu from './chatbox/ChatBoxSlashMenu.vue'
+import type { SlashMenuItem } from './chatbox/ChatBoxSlashMenu.vue'
+import ChatBoxPlusMenu from './chatbox/ChatBoxPlusMenu.vue'
+import SkillsPlaceholderDialog, {
+  type SkillsPlaceholderVariant,
+} from './skills/SkillsPlaceholderDialog.vue'
+import {
+  applySlashSelection,
+  buildSlashItems,
+  createSlashSuggestion,
+  type SlashItem,
+} from './chatbox/slashSuggestion'
+import { SkillTag } from './chatbox/skillTag'
+import { collectRequiredSkills } from './chatbox/requiredSkills'
+import { useSkills } from '@/composables/useSkills'
+import { useSettingsDialog } from '@/composables/useSettingsDialog'
+import type { PendingHomeDraft } from '@/composables/usePendingHomeMessage'
+import { Plus } from 'lucide-vue-next'
+import type { FileInfo } from '../api/file'
+import type { Range } from '@tiptap/core'
+
+const { t } = useI18n()
+const { slashSkills, launchSkillCreatorFlow } = useSkills()
+const { openSettingsDialog } = useSettingsDialog()
+const hasTextInput = ref(false)
+const chatBoxFileListRef = ref()
+const showPlusMenu = ref(false)
+const plusMenuRef = ref<HTMLElement | null>(null)
+const plusSkillDialogVariants = ['upload', 'github', 'official'] as const
+const plusSkillDialogOpen = reactive<Record<(typeof plusSkillDialogVariants)[number], boolean>>({
+  upload: false,
+  github: false,
+  official: false,
+})
+
+const slashMenuOpen = ref(false)
+const slashMenuItems = ref<SlashItem[]>([])
+const slashActiveIndex = ref(0)
+const slashPositionStyle = ref<Record<string, string>>({})
+let slashCommand: ((item: SlashItem) => void) | null = null
+let slashRange: Range | null = null
+
+const plusMenuPositionStyle = {
+  position: 'absolute',
+  bottom: 'calc(100% + 8px)',
+  left: '0',
+}
+
+const props = withDefaults(defineProps<{
+  modelValue: string
+  rows: number
+  isRunning: boolean
+  attachments: FileInfo[]
+  hideStopButton?: boolean
+  allowSendFilesOnly?: boolean
+  /** Manus session detail uses "Send message to Manus"; home keeps the task prompt. */
+  placeholder?: string
+  dense?: boolean
+}>(), {
+  placeholder: undefined,
+  dense: false,
+  hideStopButton: false,
+  allowSendFilesOnly: false,
+})
+
+const placeholderText = computed(() => props.placeholder || t('Assign a task or type / to see more'))
+
+const sendEnabled = computed(() => {
+  const hasFiles = (props.attachments?.length ?? 0) > 0
+  const allUploaded = chatBoxFileListRef.value?.isAllUploaded ?? true
+  if (props.allowSendFilesOnly) {
+    return hasTextInput.value || (hasFiles && allUploaded)
+  }
+  return hasTextInput.value && (!hasFiles || allUploaded)
+})
+
+const emit = defineEmits<{
+  (e: 'update:modelValue', value: string): void
+  (e: 'update:attachments', value: FileInfo[]): void
+  (e: 'submit', requiredSkills: { id: string; name: string }[]): void
+  (e: 'stop'): void
+}>()
+
+const handleSubmit = () => {
+  if (!sendEnabled.value) return
+  const requiredSkills = editor.value ? collectRequiredSkills(editor.value) : []
+  emit('submit', requiredSkills)
+}
+
+const handleStop = () => {
+  emit('stop')
+}
+
+const uploadFile = () => {
+  chatBoxFileListRef.value?.uploadFile()
+}
+
+const runAddLocalFiles = () => {
+  showPlusMenu.value = false
+  slashMenuOpen.value = false
+  uploadFile()
+}
+
+const insertSkillTag = (skill: { id: string; name: string; description?: string; owner_type?: string }) => {
+  showPlusMenu.value = false
+  slashMenuOpen.value = false
+  if (!editor.value) return
+  editor.value
+    .chain()
+    .command(({ tr, dispatch }) => {
+      if (dispatch) tr.setMeta('scrollIntoView', false)
+      return true
+    })
+    .insertSkillTag({
+      skillId: skill.id,
+      name: skill.name,
+      description: skill.description || '',
+      ownerType: skill.owner_type || '',
+    })
+    .insertContent(' ')
+    .run()
+}
+
+const getSlashItems = () =>
+  buildSlashItems({
+    runAddLocalFiles,
+    skills: slashSkills.value,
+    onInsertSkill: insertSkillTag,
+  })
+
+const handlePlusManageSkills = () => {
+  showPlusMenu.value = false
+  openSettingsDialog('skills')
+}
+
+const handlePlusAddSkill = async (variant: SkillsPlaceholderVariant) => {
+  showPlusMenu.value = false
+  if (variant === 'build') {
+    try {
+      const skill = await launchSkillCreatorFlow()
+      seedDraft({
+        before: t('Help me create a skill together using '),
+        skill: {
+          skillId: skill.id,
+          name: skill.name,
+          description: skill.description,
+          ownerType: skill.owner_type,
+        },
+        after: t(' to create a skill. First ask me what the skill should do.'),
+      })
+    } catch {
+      // leave composer unchanged on failure
+    }
+    return
+  }
+  plusSkillDialogOpen[variant] = true
+}
+
+const handleSlashSelect = (item: SlashMenuItem) => {
+  const full: SlashItem =
+    slashMenuItems.value.find((i) => i.id === item.id) ??
+    getSlashItems().find((i) => i.id === item.id) ??
+    {
+      id: 'add_local_files',
+      kind: 'local',
+      titleKey: 'Add local files',
+      run: runAddLocalFiles,
+    }
+
+  applySlashSelection({
+    editor: editor.value,
+    range: slashRange,
+    command: slashCommand,
+    item: full,
+  })
+  slashRange = null
+  slashCommand = null
+}
+
+const applySlashSuggestionProps = (suggestionProps: SuggestionProps<SlashItem>) => {
+  slashMenuItems.value = suggestionProps.items
+  slashCommand = suggestionProps.command
+  slashRange = suggestionProps.range
+  slashActiveIndex.value = 0
+  const rect = suggestionProps.clientRect?.()
+  if (rect) {
+    slashPositionStyle.value = {
+      position: 'fixed',
+      left: `${Math.round(rect.left)}px`,
+      top: `${Math.round(rect.bottom + 8)}px`,
+    }
+  }
+}
+
+/** Plain-text → TipTap JSON doc (avoids HTML parse of `<`/`&`). */
+const plainTextToDoc = (text: string) => ({
+  type: 'doc' as const,
+  content: (text || '').split('\n').map((line) => ({
+    type: 'paragraph' as const,
+    ...(line
+      ? { content: [{ type: 'text' as const, text: line }] }
+      : {}),
+  })),
+})
+
+const editor = useEditor({
+  extensions: [
+    StarterKit.configure({
+      heading: false,
+      codeBlock: false,
+      blockquote: false,
+      horizontalRule: false,
+      // keep bold/italic/lists/hardBreak
+    }),
+    Placeholder.configure({ placeholder: () => placeholderText.value }),
+    SkillTag,
+    createSlashSuggestion({
+      items: getSlashItems,
+      onOpenChange: (open) => {
+        slashMenuOpen.value = open
+        if (!open) {
+          slashMenuItems.value = []
+          slashCommand = null
+          // Keep slashRange until select/onStart so mouse click after blur can still delete `/`
+        }
+      },
+      render: {
+        onStart: (suggestionProps) => {
+          applySlashSuggestionProps(suggestionProps)
+        },
+        onUpdate: (suggestionProps) => {
+          applySlashSuggestionProps(suggestionProps)
+        },
+        onExit: () => {
+          slashMenuItems.value = []
+          slashCommand = null
+          // Keep slashRange for pending mouse click after focus steal
+        },
+        onKeyDown: ({ event }) => {
+          if (!slashMenuOpen.value || slashMenuItems.value.length === 0) return false
+          if (event.key === 'ArrowDown') {
+            event.preventDefault()
+            slashActiveIndex.value =
+              (slashActiveIndex.value + 1) % slashMenuItems.value.length
+            return true
+          }
+          if (event.key === 'ArrowUp') {
+            event.preventDefault()
+            slashActiveIndex.value =
+              (slashActiveIndex.value - 1 + slashMenuItems.value.length) %
+              slashMenuItems.value.length
+            return true
+          }
+          if (event.key === 'Enter') {
+            event.preventDefault()
+            const item = slashMenuItems.value[slashActiveIndex.value]
+            if (item) {
+              applySlashSelection({
+                editor: editor.value,
+                range: slashRange,
+                command: slashCommand,
+                item,
+              })
+              slashRange = null
+              slashCommand = null
+            }
+            return true
+          }
+          if (event.key === 'Escape') {
+            slashMenuOpen.value = false
+            slashRange = null
+            return true
+          }
+          return false
+        },
+      },
+    }),
+  ],
+  content: plainTextToDoc(props.modelValue || ''),
+  editorProps: {
+    attributes: { class: 'tiptap ProseMirror focus:outline-none' },
+    handleKeyDown: (_view, event) => {
+      if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
+        if (slashMenuOpen.value) return false
+        if (sendEnabled.value) {
+          event.preventDefault()
+          handleSubmit()
+          return true
+        }
+      }
+      return false
+    },
+  },
+  onUpdate: ({ editor: ed }) => {
+    const text = ed.getText({ blockSeparator: '\n' })
+    hasTextInput.value = !!text.trim()
+    emit('update:modelValue', text)
+  },
+})
+
+const syncModelToEditor = (val: string) => {
+  if (!editor.value) return
+  const current = editor.value.getText({ blockSeparator: '\n' })
+  if (val !== current) {
+    editor.value.commands.setContent(plainTextToDoc(val), { emitUpdate: false })
+  }
+  hasTextInput.value = !!(val ?? '').trim()
+}
+
+watch(() => props.modelValue, (val) => {
+  syncModelToEditor(val ?? '')
+})
+
+// Retry inbound sync once the editor becomes ready (missed early modelValue).
+watch(editor, (ed) => {
+  if (ed) syncModelToEditor(props.modelValue ?? '')
+})
+
+watch(placeholderText, () => {
+  // Placeholder extension reads function; force view update if needed
+  if (editor.value?.view) {
+    editor.value.view.dispatch(editor.value.state.tr)
+  }
+})
+
+onBeforeUnmount(() => editor.value?.destroy())
+
+/** Seed TipTap with text + skillTag chip (official Create Skill with Manus draft). */
+const seedDraft = (draft: PendingHomeDraft) => {
+  if (!editor.value) return
+  const paragraphContent: Array<Record<string, unknown>> = []
+  if (draft.before) {
+    paragraphContent.push({ type: 'text', text: draft.before })
+  }
+  if (draft.skill.skillId && draft.skill.name) {
+    paragraphContent.push({
+      type: 'skillTag',
+      attrs: {
+        skillId: draft.skill.skillId,
+        name: draft.skill.name,
+        description: draft.skill.description || '',
+        ownerType: draft.skill.ownerType || '',
+      },
+    })
+  }
+  if (draft.after) {
+    paragraphContent.push({ type: 'text', text: draft.after })
+  }
+  editor.value.commands.setContent({
+    type: 'doc',
+    content: [{ type: 'paragraph', content: paragraphContent }],
+  })
+  const text = editor.value.getText({ blockSeparator: '\n' })
+  hasTextInput.value = !!text.trim()
+  emit('update:modelValue', text)
+}
+
+defineExpose({ editor, seedDraft })
+
+const onDocClick = (e: MouseEvent) => {
+  if (showPlusMenu.value && plusMenuRef.value && !plusMenuRef.value.contains(e.target as Node)) {
+    showPlusMenu.value = false
+  }
+}
+
+onMounted(() => document.addEventListener('mousedown', onDocClick))
+onUnmounted(() => document.removeEventListener('mousedown', onDocClick))
+
+// Sync initial hasTextInput from modelValue
+hasTextInput.value = !!props.modelValue.trim()
+</script>
+
+<style>
+.chat-input-editor .tiptap {
+  outline: none;
+  min-height: inherit;
+}
+
+.chat-input-editor .tiptap p.is-editor-empty:first-child::before,
+.chat-input-editor .tiptap p.is-empty:first-child::before {
+  color: var(--text-disable);
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+</style>

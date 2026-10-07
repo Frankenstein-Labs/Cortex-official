@@ -1,0 +1,257 @@
+# AI Manus
+
+English | [中文](README_zh.md) | [Official Site](https://ai-manus.com) | [Documents](https://docs.ai-manus.com/#/en/)
+
+[![GitHub stars](https://img.shields.io/github/stars/simpleyyt/ai-manus?style=social)](https://github.com/simpleyyt/ai-manus/stargazers)
+&ensp;
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+AI Manus is a general-purpose AI Agent system that supports running various tools and operations in a sandbox environment.
+
+Enjoy your own agent with AI Manus!
+
+❤️ Like AI Manus? Give it a star 🌟 or [Sponsor](docs/sponsor.md) to support the development!
+
+🚀 [Try a Demo](https://app.ai-manus.com)
+
+📝 [Blog: Rebuild Manus with WebUI and Sandbox](https://simpleyyt.com/2026/03/07/rebuild-manus-with-webui-and-sandbox/)
+
+## Demos
+
+<!-- demos:readme:en -->
+### Basic Features
+
+* Task: Code Use, Browser Use, and multi-session switching
+
+https://github.com/user-attachments/assets/89e0da0f-789f-464f-8648-49eb5035fe2f
+
+### Browser Use
+
+* Task: Find latest news
+
+<https://github.com/user-attachments/assets/11a0aa98-4a74-4de9-a72f-2d384e89799a>
+
+### Code Use
+
+* Task: Write a complex Python example
+
+<https://github.com/user-attachments/assets/fa45bcac-92c7-41ce-b8f6-7d9d99747f92>
+<!-- /demos:readme:en -->
+
+## Key Features
+
+ * Deployment: Minimal deployment requires only an LLM service, with no dependency on other external services.
+ * Agent loop: Plan-and-execute flow with composable system prompts and native structured output tools (no fragile JSON-in-prompt protocol).
+ * Tools: Supports Terminal, Browser, File, Web Search, and messaging tools with real-time viewing and takeover capabilities, supports external MCP tool integration.
+ * Skills: Reusable skill packages (official catalog / upload / GitHub). Manage under Settings → Features → Skills; invoke with `/` or `+` → Use skills; chat history keeps skill chips with hover tooltips. Agent loads via progressive `load_skill` and syncs packages into the sandbox. See [docs/en/skills.md](docs/en/skills.md).
+
+ * Sandbox: Each task is allocated a separate sandbox that runs in a local Docker environment.
+ * Task Sessions: Session history is managed through MongoDB/Redis, supporting background tasks.
+ * Library: The sidebar Library aggregates attachments and artifacts across your sessions, with type filters, search, per-file favorites, preview, and jump-back to the source task.
+ * Conversations: Supports stopping and interrupting, file upload and download.
+ * Multilingual: Supports both Chinese and English.
+ * Authentication: User login and authentication.
+
+## Development Roadmap
+
+ * Tools: Support for Deploy & Expose.
+ * Sandbox: Support for mobile and Windows computer access.
+ * Deployment: Support for K8s and Docker Swarm multi-cluster deployment.
+
+See [docs/roadmap.md](docs/en/roadmap.md) for the full checklist (including completed items such as Docker Compose, Settings, Celery backend, and context engineering).
+
+### Overall Design
+
+![Image](https://github.com/user-attachments/assets/69775011-1eb7-452f-adaf-cd6603a4dde5)
+
+**When a user initiates a conversation:**
+
+1. Web sends a request to create an Agent to the Server, which creates a Sandbox through `/var/run/docker.sock` and returns a session ID.
+2. The Sandbox is an Ubuntu Docker environment that starts Chrome browser and API services for tools like File/Shell.
+3. Web sends user messages to the session ID, and when the Server receives user messages, it forwards them to the PlanAct Agent for processing.
+4. During processing, the PlanAct Agent plans and executes steps: the planner/executor submit structured results through native tool calls, and call sandbox tools (Shell / Browser / File / Search / MCP) as needed.
+5. All events generated during Agent processing are sent back to Web via WebSocket.
+
+**When users browse tools:**
+
+- Browser:
+    1. The Sandbox's headless browser starts a VNC service through xvfb and x11vnc, and converts VNC to websocket through websockify.
+    2. Web's NoVNC component connects to the Sandbox through the Server's Websocket Forward, enabling browser viewing.
+- Other tools: Other tools work on similar principles.
+
+## Environment Requirements
+
+This project primarily relies on Docker for development and deployment, requiring a relatively new version of Docker:
+- Docker 20.10+
+- Docker Compose
+
+Model capability requirements:
+- Supports LangChain chat model providers (default `openai`)
+- Native **tool / function calling** (plans and step results are submitted via structured output tools such as `create_plan` / `complete_step`, not JSON-in-prompt)
+
+Deepseek and GPT models with reliable tool calling are recommended.
+
+## Deployment Guide
+
+Docker Compose is recommended for deployment:
+
+<!-- docker-compose-example.yml -->
+```yaml
+services:
+  frontend:
+    image: simpleyyt/manus-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - manus-network
+    environment:
+      - BACKEND_URL=http://backend:8000
+
+  backend:
+    image: simpleyyt/manus-backend
+    depends_on:
+      - sandbox
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      #- ./mcp.json:/etc/mcp.json # Mount MCP servers directory
+    networks:
+      - manus-network
+    env_file:
+      # All configuration is loaded from the .env file, see .env.example
+      # More configuration options: https://docs.ai-manus.com/#/configuration
+      - .env
+
+  sandbox:
+    image: simpleyyt/manus-sandbox
+    command: /bin/sh -c "exit 0"  # prevent sandbox from starting, ensure image is pulled
+    restart: "no"
+    networks:
+      - manus-network
+
+  mongodb:
+    image: mongo:7.0
+    volumes:
+      - mongodb_data:/data/db
+    restart: unless-stopped
+    #ports:
+    #  - "27017:27017"
+    networks:
+      - manus-network
+
+  redis:
+    image: redis:7.0
+    restart: unless-stopped
+    networks:
+      - manus-network
+
+volumes:
+  mongodb_data:
+    name: manus-mongodb-data
+
+networks:
+  manus-network:
+    name: manus-network
+    driver: bridge
+```
+<!-- /docker-compose-example.yml -->
+
+Save as `docker-compose.yml` file. All configuration is loaded from a `.env` file, so create one next to it based on [.env.example](https://github.com/simpleyyt/ai-manus/blob/main/.env.example). At minimum set `API_KEY`:
+
+```ini
+API_KEY=sk-xxxx
+API_BASE=https://api.openai.com/v1
+MODEL_NAME=gpt-4o
+```
+
+Then run:
+
+```shell
+docker compose up -d
+```
+
+> Note: If you see `sandbox-1 exited with code 0`, this is normal, as it ensures the sandbox image is successfully pulled locally.
+
+Open your browser and visit <http://localhost:5173> to access Manus. For more configuration options, see: https://docs.ai-manus.com/#/en/configuration
+
+## Development Guide
+
+### Project Structure
+
+This project consists of the following sub-projects:
+
+* `frontend`: Manus frontend
+* `backend`: Manus backend
+* `sandbox`: Manus sandbox
+* `mockserver`: Mock LLM server (for development/testing)
+
+### Environment Setup
+
+1. Download the project:
+```bash
+git clone https://github.com/simpleyyt/ai-manus.git
+cd ai-manus
+```
+
+2. Copy the configuration file:
+```bash
+cp .env.example .env
+```
+
+3. Modify the configuration file. At minimum set `API_KEY`. See [.env.example](https://github.com/simpleyyt/ai-manus/blob/main/.env.example) or [Configuration](https://docs.ai-manus.com/#/en/configuration) for the full list of options:
+
+```ini
+API_KEY=sk-xxxx
+API_BASE=https://api.openai.com/v1
+MODEL_NAME=gpt-4o
+```
+
+### Development and Debugging
+
+1. Run in debug mode:
+```bash
+# Equivalent to docker compose -f docker-compose-development.yml up
+./dev.sh up
+```
+
+All services will run in reload mode, and code changes will be automatically reloaded. The exposed ports are as follows:
+- 5173: Web frontend port
+- 8000: Server API service port
+- 5678: Server debugpy port (remote Python debugging)
+- 8080: Sandbox API service port
+- 5902: Sandbox VNC port (mapped to 5900 inside the container)
+- 27017: MongoDB port
+
+> *Note: In Debug mode, only one sandbox will be started globally*
+
+2. When dependencies change (`backend/pyproject.toml` or `frontend/package.json`), clean up and rebuild:
+```bash
+# Clean up all related resources
+./dev.sh down -v
+
+# Rebuild images
+./dev.sh build
+
+# Run in debug mode
+./dev.sh up
+```
+
+### Image Publishing
+
+```bash
+export IMAGE_REGISTRY=your-registry-url
+export IMAGE_TAG=latest
+
+# Build images
+./run.sh build
+
+# Push to the corresponding image repository
+./run.sh push
+```
+
+## ⭐️ Star History
+
+[![Star History Chart](https://star-history.dera.page/svg?repos=Simpleyyt/ai-manus&type=Date)](https://star-history.dera.page/#Simpleyyt/ai-manus&type=Date)

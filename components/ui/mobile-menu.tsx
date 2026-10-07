@@ -96,13 +96,13 @@ export default function MobileMenu({
                         {user.user_metadata.full_name || user.email}
                       </span>
                     </div>
-                    <Link href="/dashboard" onClick={() => setIsOpen(false)}>
+                    <Link href="/ai-manus" onClick={() => setIsOpen(false)}>
                       <Button
                         variant="outline"
                         className="w-full justify-start"
                       >
                         <Settings className="mr-2 h-4 w-4" />
-                        Dashboard
+                        AI Manus
                       </Button>
                     </Link>
                     <Button
@@ -203,6 +203,9 @@ export default function MobileMenu({
               </Accordion>
               <MobileNavItem href="/pricing" onClick={() => setIsOpen(false)}>
                 Pricing
+              </MobileNavItem>
+              <MobileNavItem href="/ai-manus" onClick={() => setIsOpen(false)}>
+                AI Manus
               </MobileNavItem>
             </ul>
           </nav>

@@ -18,7 +18,7 @@ export default async function Dashboard({
   // The web experience ends on the presentation page after authentication.
   // Keep this protected compatibility route only for the desktop-app callback.
   if (!searchParams.callback) {
-    return redirect("/");
+    return redirect("/ai-manus");
   }
 
   const {

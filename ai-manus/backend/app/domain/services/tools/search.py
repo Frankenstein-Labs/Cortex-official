@@ -1,0 +1,39 @@
+from typing import Optional
+from app.domain.external.search import SearchEngine
+from app.domain.services.tools.base import BaseToolkit, tool
+from app.domain.models.tool_result import ToolResult
+
+class SearchToolkit(BaseToolkit):
+    """Search tool class, providing search engine interaction functions"""
+
+    name: str = "search"
+    instructions: str = """
+- Prefer the dedicated search tool over browsing to a search engine results page
+- Snippets are not valid sources; open the original pages via browser before citing
+- Visit multiple result URLs for comprehensive information or cross-validation
+- Search step by step: query attributes of a single entity separately, handle entities one by one
+- Authoritative web information takes priority over internal model knowledge
+"""
+    
+    def __init__(self, search_engine: SearchEngine):
+        """Initialize search tool class
+        
+        Args:
+            search_engine: Search engine service
+        """
+        super().__init__()
+        self.search_engine = search_engine
+    
+    @tool
+    async def info_search_web(
+        self,
+        query: str,
+        date_range: Optional[str] = None
+    ) -> ToolResult:
+        """Search web pages using search engine. Use for obtaining latest information or finding references.
+        
+        Args:
+            query: Search query in Google search style, using 3-5 keywords.
+            date_range: (Optional) Time range filter for search results.
+        """
+        return await self.search_engine.search(query, date_range) 

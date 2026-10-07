@@ -42,8 +42,8 @@ export default function AuthButton({
         </div>
       ) : (
         <>
-          <Link href="/dashboard">
-            <Button variant="outline">Dashboard</Button>
+          <Link href="/ai-manus">
+            <Button variant="outline">AI Manus</Button>
           </Link>
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>

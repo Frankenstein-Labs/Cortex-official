@@ -1,0 +1,35 @@
+# 🤖 AI Manus 开源通用智能体
+
+官网地址：<https://ai-manus.com>
+
+GitHub：<https://github.com/simpleyyt/ai-manus> | Demo：<https://app.ai-manus.com>
+
+博客文章：[我也复刻了一个 Manus，带高仿 WebUI 和沙盒](https://simpleyyt.com/2026/03/07/rebuild-manus-with-webui-and-sandbox/)
+
+---
+
+AI Manus 是一个通用的 AI Agent 系统，可以完全私有部署，支持在沙盒环境中运行各种工具和操作。
+
+AI Manus 项目目标是希望成为可完全私有部署的企业级 Manus 应用。垂类 Manus 的应用有多种重复性的工程化工作，这个项目希望把这部分统一，让大家可以像搭积木一下建立起一个垂类 Manus 应用。
+
+AI Manus 中每个服务与工具都包含一个 Built-in 版本，可以做到完全私有部署。后续可以通过 A2A 与 MCP 协议，把 Built-in 的 Agent 与 Tools 都置换掉。底层基建也可以通过提供多样的提供商配置或者简单的开发适配置换掉。AI Manus 从架构设计上便支持分布式多实例部署，方便横向扩展，达到企业级的部署要求。
+
+---
+
+## 基本功能
+
+[](https://github.com/user-attachments/assets/89e0da0f-789f-464f-8648-49eb5035fe2f ':include :type=video controls width="100%"')
+
+## 核心功能
+
+ * **部署：**最小只需要一个 LLM 服务即可完成部署，不需要依赖其它外部服务。
+ * **Agent 循环：**Plan-and-Execute，可组合 System Prompt，原生结构化输出工具（`create_plan` / `complete_step` 等）。
+ * **工具：**支持 Terminal、Browser、File、Web Search、消息工具，并支持实时查看和接管，支持外部 MCP 工具集成。
+ * **Skills：**可复用技能包（官方目录 / 上传 / GitHub 导入）。在「设置 → 功能 → 技能」管理；对话中用 `/` 或 `+` →「使用技能」调用；历史消息保留技能 chip 与悬停说明。Agent 经 `load_skill` 渐进加载并同步到沙盒。详见 [Skills 技能](skills.md)。
+
+ * **沙盒：**每个 Task 会分配单独的一个沙盒，沙盒在本地 Docker 环境里面运行。
+ * **任务会话：**通过 Mongo/Redis 对会话历史进行管理，支持后台任务。
+ * **库：**侧栏「库」页面聚合用户各会话中的附件与产物，支持类型筛选、搜索、文件级收藏与预览，并可跳转回原任务。
+ * **对话：**支持停止与打断，支持文件上传与下载。
+ * **多语言：**支持中文与英文。
+ * **认证：**用户登录与认证。

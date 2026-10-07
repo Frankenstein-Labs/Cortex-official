@@ -1,0 +1,81 @@
+- choices:
+    - index: 0
+      message:
+        role: assistant
+        content: null
+        tool_calls:
+          - type: function
+            function:
+              name: create_plan
+              arguments: |
+                {
+                  "message": "This is a test",
+                  "language": "en",
+                  "goal": "test goal",
+                  "title": "test title",
+                  "steps": [
+                    {
+                      "id": "1",
+                      "description": "test message tools"
+                    }
+                  ]
+                }
+
+- choices:
+    - index: 0
+      message:
+        role: assistant
+        content: null
+        tool_calls:
+          - type: function
+            function:
+              name: message_notify_user
+              arguments: |
+                {
+                    "text": "Task is in progress, please wait..."
+                }
+
+- choices:
+    - index: 0
+      message:
+        role: assistant
+        content: null
+        tool_calls:
+          - type: function
+            function:
+              name: complete_step
+              arguments: |
+                {
+                  "success": true,
+                  "result": "test message end",
+                  "attachments": []
+                }
+
+- choices:
+    - index: 0
+      message:
+        role: assistant
+        content: null
+        tool_calls:
+          - type: function
+            function:
+              name: update_plan
+              arguments: |
+                {
+                  "steps": []
+                }
+
+- choices:
+    - index: 0
+      message:
+        role: assistant
+        content: null
+        tool_calls:
+          - type: function
+            function:
+              name: deliver_result
+              arguments: |
+                {
+                  "message": "Message tool test finished.",
+                  "attachments": []
+                }

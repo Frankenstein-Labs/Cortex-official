@@ -1,0 +1,83 @@
+- choices:
+    - index: 0
+      message:
+        role: assistant
+        content: null
+        tool_calls:
+          - type: function
+            function:
+              name: create_plan
+              arguments: |
+                {
+                  "message": "This is a test",
+                  "language": "en",
+                  "goal": "test goal",
+                  "title": "test title",
+                  "steps": [
+                    {
+                      "id": "1",
+                      "description": "test search tools"
+                    }
+                  ]
+                }
+
+- choices:
+    - index: 0
+      message:
+        role: assistant
+        content: null
+        tool_calls:
+          - type: function
+            function:
+              name: info_search_web
+              arguments: |
+                {
+                    "query": "latest AI developments 2024",
+                    "date_range": "past_month"
+                }
+      finish_reason: stop
+
+- choices:
+    - index: 0
+      message:
+        role: assistant
+        content: null
+        tool_calls:
+          - type: function
+            function:
+              name: complete_step
+              arguments: |
+                {
+                  "success": true,
+                  "result": "test search end",
+                  "attachments": []
+                }
+
+- choices:
+    - index: 0
+      message:
+        role: assistant
+        content: null
+        tool_calls:
+          - type: function
+            function:
+              name: update_plan
+              arguments: |
+                {
+                  "steps": []
+                }
+
+- choices:
+    - index: 0
+      message:
+        role: assistant
+        content: null
+        tool_calls:
+          - type: function
+            function:
+              name: deliver_result
+              arguments: |
+                {
+                  "message": "Search tool test finished.",
+                  "attachments": []
+                }

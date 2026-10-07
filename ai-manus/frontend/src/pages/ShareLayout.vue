@@ -1,0 +1,20 @@
+<template>
+  <div class="h-screen flex overflow-hidden bg-white">
+    <div class="flex-1 min-w-0 h-full py-0 pr-0 relative">
+      <div class="flex h-full bg-[var(--background-gray-main)]">
+        <div class="flex flex-1 min-w-0 min-h-0">
+          <router-view />
+          <FilePreviewer />
+        </div>
+      </div>
+    </div>
+  </div>
+  <CustomDialog />
+  <SessionFileList />
+</template>
+
+<script setup lang="ts">
+import CustomDialog from '@/components/ui/CustomDialog.vue';
+import SessionFileList from '@/components/SessionFileList.vue';
+import FilePreviewer from '@/components/FilePreviewer.vue';
+</script>
