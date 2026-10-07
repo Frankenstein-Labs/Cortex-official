@@ -15,7 +15,7 @@ export default async function SignUp() {
   const { data } = await supabase.auth.getUser();
 
   if (data?.user) {
-    redirect("/");
+    redirect("/ai-manus");
   }
   return (
     <>

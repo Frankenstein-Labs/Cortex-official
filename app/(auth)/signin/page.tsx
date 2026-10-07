@@ -27,7 +27,7 @@ export default async function SignIn({ searchParams }: SignInProps) {
       // Redirect to dashboard page with callback for desktop app
       redirect("/dashboard?callback=" + searchParams.callback);
     } else {
-      redirect("/");
+      redirect("/ai-manus");
     }
   }
   return (
