@@ -25,6 +25,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error("Error logging download:", error);
     return NextResponse.json(
       { error: "Failed to log download" },

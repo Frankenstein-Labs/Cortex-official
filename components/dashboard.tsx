@@ -75,11 +75,13 @@ export default function DashboardPage({
       router.push(openAppUrl);
     } catch (error) {
       if (error instanceof UnsafeUrlError) {
+        // eslint-disable-next-line no-console
         console.error(error.message);
         toast.error(
           "Unsafe link detected. Navigation blocked for your security.",
         );
       } else {
+        // eslint-disable-next-line no-console
         console.error("Error in handleCallbackForApp:", error);
         toast.error(
           "An error occurred while processing the link. Please try again.",
@@ -101,6 +103,7 @@ export default function DashboardPage({
       const usageData: UsageType = await response.json();
       setUsage(usageData);
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error("Error fetching requests usage:", error);
       toast.error("Failed to fetch usage data. Please try again later.");
     } finally {
@@ -114,6 +117,7 @@ export default function DashboardPage({
         await handleCallbackForApp();
         await getUserRequestsUsage();
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error("Error in effect:", error);
         toast.error(
           "An unexpected error occurred. Please try refreshing the page.",

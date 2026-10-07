@@ -39,6 +39,7 @@ async function createCheckoutSession(request: NextRequest & { user: User }) {
       .eq("status", "active")
       .limit(1);
     if (error) {
+      // eslint-disable-next-line no-console
       console.error("error checking user existing subscription", error);
       return NextResponse.json(
         {

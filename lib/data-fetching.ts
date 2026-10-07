@@ -37,6 +37,7 @@ export async function getUserAndSubscription(): Promise<GetUserSubscriptionResul
     .single();
 
   if (error) {
+    // eslint-disable-next-line no-console
     console.error("Error fetching subscription data:" + error);
   }
 

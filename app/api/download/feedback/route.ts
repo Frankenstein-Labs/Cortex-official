@@ -47,6 +47,7 @@ export async function POST(request: NextRequest) {
       { status: 200 },
     );
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error("Error processing feedback:", error);
     return NextResponse.json(
       { error: "Failed to process feedback" },

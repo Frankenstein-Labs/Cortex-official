@@ -46,7 +46,6 @@ export default function ResetPassword() {
 
   const handleResetPassword = async (data: ResetPasswordFormData) => {
     if (isSubmitting) {
-      console.log("Already submitting, returning");
       return;
     }
 

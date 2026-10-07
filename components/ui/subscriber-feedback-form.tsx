@@ -45,6 +45,7 @@ export function SubscriberFeedbackForm() {
         } = await supabase.auth.getUser();
 
         if (!user) {
+          // eslint-disable-next-line no-console
           console.error("No user found");
           router.push("/dashboard");
           return;
@@ -57,9 +58,11 @@ export function SubscriberFeedbackForm() {
         } as SubscriberFeedback);
 
         if (error) {
+          // eslint-disable-next-line no-console
           console.error("Error submitting feedback:", error);
         }
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error("Error submitting feedback:", error);
       }
     }
