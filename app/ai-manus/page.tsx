@@ -7,11 +7,15 @@ function createSsoToken(user: { id: string; email?: string; name?: string }) {
   const secret = process.env.AI_MANUS_SSO_SECRET;
   if (!secret) return null;
 
+  const email = user.email || `${user.id}@user.local`;
+  const fullname =
+    user.name || (user.email ? user.email.split("@")[0] : "User");
+
   const payload = Buffer.from(
     JSON.stringify({
       sub: user.id,
-      email: user.email,
-      fullname: user.name || user.email?.split("@")[0] || "PearAI User",
+      email,
+      fullname,
       exp: Math.floor(Date.now() / 1000) + 60,
     }),
   ).toString("base64url");

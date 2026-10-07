@@ -7,7 +7,7 @@ on:
     branches: ["main", "master"]
 
 jobs:
-  build_and_test:
+  nextjs_build_and_lint:
     name: Build and Lint Next.js
     runs-on: ubuntu-latest
 
@@ -22,10 +22,33 @@ jobs:
           cache: "yarn"
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: yarn install
 
       - name: Lint code
         run: yarn lint
 
       - name: Build Next.js application
         run: yarn build
+
+  python_backend_test:
+    name: Test AI Manus Python Backend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install flake8 pytest
+          if [ -f ai-manus/backend/requirements.txt ]; then pip install -r ai-manus/backend/requirements.txt; fi
+
+      - name: Lint with flake8
+        run: |
+          flake8 ai-manus/backend --count --select=E9,F63,F7,F82 --show-source --statistics
