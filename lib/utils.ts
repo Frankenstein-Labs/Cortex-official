@@ -23,9 +23,9 @@ interface OSType {
 }
 
 const defaultMetadata = {
-  title: "PearAI - The AI Code Editor For Your Next Project",
+  title: "Cortex — AI workspace for software",
   description:
-    "PearAI is an open source AI code editor with powerful features like AI chat, PearAI Creator, and AI debugging to help you make what excites.",
+    "A browser-based AI workspace for conversations, project context and development tools.",
 };
 
 export const normalizeDate = (dateString: string) => {
@@ -36,7 +36,7 @@ export const normalizeDate = (dateString: string) => {
 const allowedProtocols: AllowedProtocol[] = [
   "http:",
   "https:",
-  "pearai:",
+  "cortex:",
   "vscode:",
   "code-oss:",
   "vscode-insiders:",
@@ -56,18 +56,17 @@ export const constructMetadata = ({
   title,
   description = defaultMetadata.description,
   canonical = "/",
-  ogImage = "/images/og-image.png",
+  ogImage = "/images/cortex-og.svg",
 }: MetadataProps) => {
   return {
-    metadataBase: new URL("https://trypear.ai/"),
-    title: title ? `${title} - PearAI` : defaultMetadata.title,
+    metadataBase: new URL(`${getURL()}/`),
+    title: title ?? defaultMetadata.title,
     description,
     keywords: [
-      "code editor",
-      "ai code editor",
-      "ai",
-      "pearai",
-      "open source code editor",
+      "Cortex",
+      "AI workspace",
+      "AI coding assistant",
+      "software development",
     ],
     alternates: {
       canonical,
@@ -108,8 +107,8 @@ export const constructMetadata = ({
     // twitter: {
     //   title,
     //   description,
-    //   creator: "@trypearai",
-    //   site: "trypear.ai",
+    //   creator: "@cortex",
+    //   site: "cortex.example",
     //   card: "summary_large_image",
     // },
   };
@@ -118,7 +117,7 @@ export const constructMetadata = ({
 export const getURL = () => {
   let url =
     process?.env?.NEXT_PUBLIC_SITE_URL ??
-    process?.env?.NEXT_PUBLIC_VERCEL_URL ?? // Automatically set by Vercel.
+    process?.env?.VERCEL_URL ?? // Automatically set by Vercel.
     "http://localhost:3000";
 
   // Include `https://` when not localhost.

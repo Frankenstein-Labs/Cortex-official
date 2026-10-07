@@ -32,5 +32,5 @@
     ".next/types/**/*.ts",
     ".contentlayer/generated"
   ],
-  "exclude": ["node_modules", "ai-manus"]
+  "exclude": ["node_modules", "cortex-platform"]
 }

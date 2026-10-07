@@ -1,12 +1,13 @@
 import Features from "@/components/Features";
-import VideoSection from "@/components/features/VideoSection";
 import Hero from "@/components/hero";
-import OpenSource from "@/components/opensource";
 import Showcase from "@/components/showcase";
 import { constructMetadata } from "@/lib/utils";
 import { Metadata } from "next/types";
 
 export const metadata: Metadata = constructMetadata({
+  title: "Cortex — AI workspace for software",
+  description:
+    "A browser-based AI workspace for conversations, project context and development tools.",
   canonical: "/",
 });
 
@@ -14,9 +15,7 @@ export default function Home() {
   return (
     <>
       <Hero />
-      <VideoSection />
       <Features />
-      {/* <OpenSource /> */}
       <Showcase />
     </>
   );

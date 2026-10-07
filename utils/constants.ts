@@ -1,37 +1,9 @@
 import { PricingTierData } from "@/types/pricing";
-import {
-  DiscordLogo,
-  GitHubLogo,
-  LinkedInLogo,
-  TwitterLogo,
-} from "@/components/ui/icons";
+import { GitHubLogo } from "@/components/ui/icons";
 
 export const TEST_MODE_ENABLED = ["true", "True", "TRUE"].includes(
   process.env.NEXT_PUBLIC_TEST_MODE_ENABLED ?? "",
 );
-
-export const BUNNY_CDN_HOST = "https://pearai.b-cdn.net";
-
-export const MACOS_SILICON_APP_URL =
-  "https://pearai-app.nyc3.digitaloceanspaces.com/PearAI-latest/darwin-arm64/PearAI-Installer.dmg";
-export const MACOS_INTEL_APP_URL =
-  "https://pearai-app.nyc3.digitaloceanspaces.com/PearAI-latest/darwin-x64/PearAI-Installer.dmg";
-export const WINDOWS_APP_URL =
-  "https://pearai-app.nyc3.digitaloceanspaces.com/PearAI-latest/windows-x64/PearAISetup.exe";
-
-export const DOWNLOAD_URLS = {
-  "darwin-arm64": MACOS_SILICON_APP_URL, // MacOS Apple Silicon
-  darwin: MACOS_INTEL_APP_URL, // MacOS Intel
-  "intel-x64": MACOS_INTEL_APP_URL, // MacOS Intel
-  x64: MACOS_INTEL_APP_URL, // MacOS Intel
-  "win32-x64": WINDOWS_APP_URL, // Windows
-  "win32-x64-user": WINDOWS_APP_URL, // Windows
-  windows: WINDOWS_APP_URL, // Windows
-} as const;
-
-export const getDownloadUrl = (osType: keyof typeof DOWNLOAD_URLS) => {
-  return DOWNLOAD_URLS[osType] || null;
-};
 
 export const CONTACT_EMAIL = "pear@trypear.ai";
 
@@ -124,12 +96,12 @@ export const PRICING_TIERS: {
 } = {
   standard: [
     {
-      title: "Intern",
+      title: "Starter",
       price: "0",
-      description: "Download with a free trail",
+      description: "Start with the Cortex workspace",
       isFree: true,
       index: 0,
-      features: ["free", "Community Discord server"],
+      features: ["free", "GitHub community support"],
     },
     {
       title: "Maker",
@@ -138,10 +110,10 @@ export const PRICING_TIERS: {
       description:
         "Get the monthly subscription, and we'll take care of you. 😎",
       features: [
-        "Full access to PearAI Router & Hosted Servers",
+        "Access to the Cortex workspace and configured AI tools",
         "custom-standard",
-        "Full privacy: zero data retention policy with Anthropic",
-        "Direct customer support by the founders and contributors",
+        "Model and data handling follow the deployment configuration",
+        "Community support through GitHub",
         "Pay-as-you-go for additional credits",
       ],
       buttonText: "Get Started",
@@ -157,9 +129,9 @@ export const PRICING_TIERS: {
       description: "Purchase bulk at a discount",
       features: [
         "custom-enterprise",
-        "Full privacy: zero data retention policy with Anthropic",
-        "Centralized Billing and Dashboard",
-        "Direct customer support by the founders and contributors",
+        "Model and data handling follow the deployment configuration",
+        "Centralized team billing options",
+        "Support through GitHub",
       ],
       buttonText: "Contact us",
       index: 0,
@@ -198,20 +170,12 @@ export const footerSections = [
     links: [
       {
         text: "Documentation",
-        href: "/docs",
+        href: "https://github.com/Frankenstein-Labs/Cortex-official/tree/main/cortex-platform/docs",
+        target: "_blank",
       },
       {
         text: "Pricing",
         href: "/pricing",
-      },
-      {
-        text: "Blog",
-        href: "/blog",
-      },
-
-      {
-        text: "Changelog",
-        href: "/changelog",
       },
     ],
   },
@@ -220,15 +184,11 @@ export const footerSections = [
     links: [
       {
         text: "FAQ",
-        href: "/faq",
+        href: "/about",
       },
       {
-        text: "Email",
-        href: "mailto:pear@trypear.ai",
-      },
-      {
-        text: "Discord",
-        href: "https://discord.gg/7QMraJUsQt",
+        text: "GitHub support",
+        href: "https://github.com/Frankenstein-Labs/Cortex-official/issues/new",
         target: "_blank",
       },
     ],
@@ -240,18 +200,6 @@ export const HCAPTCHA_SITE_KEY_PUBLIC = "fa6c8c52-7694-45b0-97ec-7814072256b4";
 export const socialMediaLinks = [
   {
     icon: GitHubLogo,
-    link: "https://github.com/trypear/pearai-master",
-  },
-  {
-    icon: DiscordLogo,
-    link: "https://discord.gg/AKy5FmqCkF",
-  },
-  {
-    icon: TwitterLogo,
-    link: "https://x.com/trypearai",
-  },
-  {
-    icon: LinkedInLogo,
-    link: "https://www.linkedin.com/company/trypearai",
+    link: "https://github.com/Frankenstein-Labs/Cortex-official",
   },
 ];

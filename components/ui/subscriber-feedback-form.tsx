@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -47,7 +46,7 @@ export function SubscriberFeedbackForm() {
         if (!user) {
           // eslint-disable-next-line no-console
           console.error("No user found");
-          router.push("/dashboard");
+          router.push("/workspace");
           return;
         }
 
@@ -66,15 +65,14 @@ export function SubscriberFeedbackForm() {
         console.error("Error submitting feedback:", error);
       }
     }
-    router.push("/dashboard");
+    router.push("/workspace");
   }
 
   return (
     <div className="my-8">
       <div className="mb-6 text-center text-gray-700">
-        You can start using PearAI immediately! But if you have a second,
-        we&apos;d love to learn more about how you plan to use PearAI! It&apos;d
-        be very helpful - but totally optional!
+        You can start using Cortex now. If you have a moment, optional feedback
+        about your experience helps us improve the workspace.
       </div>
 
       <Form {...form}>
@@ -84,7 +82,7 @@ export function SubscriberFeedbackForm() {
             name="projectDescription"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>What are you building with PearAI?</FormLabel>
+                <FormLabel>What are you building with Cortex?</FormLabel>
                 <FormControl>
                   <Textarea
                     placeholder="I'm working on..."
@@ -102,12 +100,10 @@ export function SubscriberFeedbackForm() {
             name="choiceReason"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>
-                  What made you choose PearAI over alternatives?
-                </FormLabel>
+                <FormLabel>What brought you to Cortex?</FormLabel>
                 <FormControl>
                   <Textarea
-                    placeholder="I chose PearAI because..."
+                    placeholder="I chose Cortex because..."
                     className="min-h-[100px]"
                     {...field}
                   />
@@ -117,7 +113,6 @@ export function SubscriberFeedbackForm() {
             )}
           />
 
-          {/* Dashboard button */}
           <div className="-mx-3 flex flex-wrap">
             <div className="w-full px-3 text-center">
               <Button
@@ -125,7 +120,7 @@ export function SubscriberFeedbackForm() {
                 size="lg"
                 className="w-full bg-primary-700 text-white-main hover:bg-primary-800 hover:shadow-sm"
               >
-                Go to dashboard
+                Continue to workspace
               </Button>
             </div>
           </div>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Cortex Workspace Documentation</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="description" content="Documentation for the Cortex web workspace, agent API, skills, MCP configuration and deployment." />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0" />
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css">
+  <link rel="icon" href="./cortex-mark.svg" type="image/svg+xml">
+</head>
+
+<body>
+  <div id="app"></div>
+  <script>
+    window.$docsify = {
+      name: 'Cortex Workspace',
+      repo: 'https://github.com/Frankenstein-Labs/Cortex-official',
+      loadSidebar: true,
+      subMaxLevel: 2,
+      auto2top: true,
+      loadNavbar: true,
+      homepage: 'README.md',
+      pagination: {
+        previousText: {
+          '/en/': 'PREVIOUS',
+          '/': '上一章节'
+        },
+        nextText: {
+          '/en/': 'NEXT',
+          '/': '下一章节'
+        },
+        crossChapter: true,
+        crossChapterText: true,
+      },
+    }
+  </script>
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+    mermaid.initialize({ startOnLoad: true });
+    window.mermaid = mermaid;
+  </script>
+  <script src="//unpkg.com/docsify-mermaid@2.0.1/dist/docsify-mermaid.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify@4"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify-copy-code/dist/docsify-copy-code.min.js"></script>
+  <script src="//unpkg.com/docsify-pagination/dist/docsify-pagination.min.js"></script>
+</body>
+
+</html>

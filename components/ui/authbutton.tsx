@@ -8,7 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "./dropdown-menu";
-import { AuthError, User } from "@supabase/supabase-js";
+import { User } from "@supabase/supabase-js";
 import Link from "next/link";
 
 export default function AuthButton({
@@ -42,9 +42,6 @@ export default function AuthButton({
         </div>
       ) : (
         <>
-          <Link href="/ai-manus">
-            <Button variant="outline">AI Manus</Button>
-          </Link>
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Avatar className="h-8 w-8 cursor-pointer border border-gray-600/50">

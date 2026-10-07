@@ -1,6 +1,6 @@
 import { footerSections, socialMediaLinks } from "@/utils/constants";
 import Link from "next/link";
-import PearWhiteLogo from "./ui/PearWhiteLogo.svg";
+import CortexLogo from "./ui/cortex-logo";
 import { Button } from "./ui/button";
 
 export default function Footer() {
@@ -10,19 +10,14 @@ export default function Footer() {
         <div className="grid grid-cols-2 gap-x-5 gap-y-9 sm:grid-cols-5 sm:gap-6">
           {/* Logo and tagline */}
           <div className="col-span-full xl:col-span-2">
-            <Link className="inline-block dark:invert" href="/">
-              <PearWhiteLogo />
+            <Link className="inline-block" href="/">
+              <CortexLogo size={34} tone="light" />
             </Link>
-            <p className="mb-2 text-[#808080]">Make What Excites.</p>
-            <p className="mb-4 text-[#808080] sm:mb-2">
-              * For more information about how integrations are built into
-              PearAI, see{" "}
-              <span className="cursor-pointer text-white-50 underline hover:text-white-50/80">
-                here.
-              </span>
+            <p className="mb-4 mt-3 text-[#808080] sm:mb-2">
+              An AI workspace for building software.
             </p>
             <Button className="bg-white-50 px-6 py-3 text-sm font-semibold text-black hover:bg-white-50/80 sm:text-base">
-              <Link href="/pricing">Download</Link>
+              <Link href="/workspace">Open workspace</Link>
             </Button>
           </div>
 
@@ -68,7 +63,7 @@ export default function Footer() {
 
           {/* Copyright */}
           <span className="text-base text-[#808080]">
-            &copy; {new Date().getFullYear()} PearAI - All rights reserved.
+            &copy; {new Date().getFullYear()} Cortex. All rights reserved.
           </span>
         </div>
       </div>

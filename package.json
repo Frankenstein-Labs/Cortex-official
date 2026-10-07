@@ -1,10 +1,14 @@
 {
-  "name": "open-pro-next",
+  "name": "cortex-platform-site",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:workspace": "npm --prefix cortex-platform/frontend run build",
+    "build:all": "yarn build && yarn build:workspace",
+    "check:backend": "python3 -m compileall -q cortex-platform/backend/app",
+    "typecheck:workspace": "npm --prefix cortex-platform/frontend run type-check",
     "start": "next start",
     "format": "prettier --write .",
     "lint": "next lint",

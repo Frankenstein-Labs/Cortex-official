@@ -1,4 +1,5 @@
 import { MetadataRoute } from "next";
+import { getURL } from "@/lib/utils";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -7,6 +8,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: "",
     },
-    sitemap: "https://trypear.ai/sitemap.xml",
+    sitemap: `${getURL()}/sitemap.xml`,
   };
 }

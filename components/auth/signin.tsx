@@ -21,7 +21,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { SignInFormData, signInSchema } from "@/utils/form-schema";
-import { useSearchParams } from "next/navigation";
 import { useToggle } from "@/hooks/useToggle";
 
 export default function SignIn() {
@@ -29,8 +28,6 @@ export default function SignIn() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [captchaToken, setCaptchaToken] = useState<string>();
   const captcha = useRef<HCaptcha>(null);
-  const searchParams = useSearchParams();
-  const callbackForDesktopApp = searchParams?.get("callback") ?? "";
 
   const form = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
@@ -56,7 +53,7 @@ export default function SignIn() {
       formData.append("password", data.password);
       formData.append("captchaToken", captchaToken);
 
-      const response = await signin(formData, callbackForDesktopApp);
+      const response = await signin(formData);
       if (response?.error) {
         setErrorMessage(response.error);
       } else {
@@ -74,7 +71,7 @@ export default function SignIn() {
   const handleOAuthSignIn = async (provider: Provider) => {
     setErrorMessage(null);
     try {
-      await signinWithOAuth(provider, callbackForDesktopApp);
+      await signinWithOAuth(provider);
     } catch (error) {
       setErrorMessage("An unexpected error occurred. Please try again.");
     }

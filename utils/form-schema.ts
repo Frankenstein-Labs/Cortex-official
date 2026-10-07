@@ -7,7 +7,7 @@ export const emailSchema = z.object({
     .email({ message: "Email address is invalid." })
     .refine(async (email) => !(await isDisposableEmail(email)), {
       message:
-        "Disposable email addresses are not allowed. Not using a disposable email? Please contact pear@trypear.ai.",
+        "Disposable email addresses are not allowed. Not using a disposable email? Please contact Cortex through the GitHub support page.",
     }),
 });
 
