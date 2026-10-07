@@ -140,6 +140,7 @@ export default function SubscriptionCard({
       }
       toast.error("Failed to upgrade subscription. Subscription ID not found.");
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error("Error upgrading subscription:", error);
       toast.error("Failed to upgrade subscription.");
     } finally {

@@ -57,6 +57,7 @@ async function createTopUpSession(request: NextRequest & { user: User }) {
     const data = await response.json();
     return NextResponse.json({ url: data.url });
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error("Error creating top-up session:", error);
     return NextResponse.json(
       { error: "Failed to create top-up session" },
