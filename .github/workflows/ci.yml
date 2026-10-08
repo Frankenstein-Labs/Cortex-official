@@ -30,7 +30,7 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: Install workspace frontend dependencies
-        run: npm --prefix cortex-platform/frontend ci
+        run: npm --prefix cortex-platform/frontend install
 
       - name: Lint code
         run: yarn lint
