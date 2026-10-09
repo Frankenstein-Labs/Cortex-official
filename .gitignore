@@ -10,3 +10,5 @@ node_modules/
 .contentlayer
 .aider*
 .env
+
+*.tsbuildinfo

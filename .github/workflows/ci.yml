@@ -7,8 +7,8 @@ on:
     branches: ["main", "master"]
 
 jobs:
-  build_and_test:
-    name: Build and Lint Next.js
+  nextjs_app:
+    name: Next.js Site & Account Shell
     runs-on: ubuntu-latest
 
     steps:
@@ -29,3 +29,54 @@ jobs:
 
       - name: Build Next.js application
         run: yarn build
+
+  frontend_workspace:
+    name: Frontend Workspace (Vue/Vite)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install frontend dependencies
+        working-directory: cortex-platform/frontend
+        run: npm ci
+
+      - name: Type check frontend
+        working-directory: cortex-platform/frontend
+        run: npm run type-check
+
+      - name: Run frontend tests
+        working-directory: cortex-platform/frontend
+        run: npm test -- --reporter=dot
+
+      - name: Build frontend workspace
+        working-directory: cortex-platform/frontend
+        run: npm run build
+
+  backend_workspace:
+    name: Backend Workspace (FastAPI)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run Python unit tests
+        working-directory: cortex-platform/backend
+        run: uv run pytest -m "not e2e and not skill_github_e2e and not file_api"
