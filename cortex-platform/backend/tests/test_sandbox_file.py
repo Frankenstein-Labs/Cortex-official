@@ -10,6 +10,8 @@ import io
 from app.infrastructure.external.sandbox.docker_sandbox import DockerSandbox
 from app.domain.models.tool_result import ToolResult
 
+pytestmark = pytest.mark.e2e
+
 logger = logging.getLogger(__name__)
 
 
