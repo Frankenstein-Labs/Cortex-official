@@ -8,7 +8,7 @@ on:
 
 jobs:
   build_and_test:
-    name: Build and Lint Next.js
+    name: Full CI/CD (Next.js, Vue Frontend, Python Backend)
     runs-on: ubuntu-latest
 
     steps:
@@ -21,11 +21,34 @@ jobs:
           node-version: 20
           cache: "yarn"
 
-      - name: Install dependencies
+      - name: Setup Python & uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          python-version: "3.12"
+
+      - name: Install root dependencies
         run: yarn install --frozen-lockfile
 
-      - name: Lint code
+      - name: Install frontend workspace dependencies
+        run: npm --prefix cortex-platform/frontend ci
+
+      - name: Lint Next.js site
         run: yarn lint
 
-      - name: Build Next.js application
+      - name: Build Next.js site
         run: yarn build
+
+      - name: Type-check Vue workspace frontend
+        run: yarn typecheck:workspace
+
+      - name: Build Vue workspace frontend
+        run: yarn build:workspace
+
+      - name: Run Vue workspace frontend tests
+        run: yarn test:frontend
+
+      - name: Check Python backend compilation
+        run: yarn check:backend
+
+      - name: Run Python backend unit tests
+        run: yarn test:backend

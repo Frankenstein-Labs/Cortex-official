@@ -13,6 +13,21 @@ from app.domain.models.tool_result import ToolResult
 logger = logging.getLogger(__name__)
 
 
+def _sandbox_ready() -> bool:
+    import socket
+    try:
+        with socket.create_connection(("127.0.0.1", 8080), timeout=1):
+            return True
+    except (OSError, TimeoutError):
+        return False
+
+
+@pytest.fixture(autouse=True)
+def _ensure_sandbox_running():
+    if not _sandbox_ready():
+        pytest.skip("Docker sandbox service is not running at 127.0.0.1:8080")
+
+
 @pytest.fixture
 def sandbox_instance():
     """Create a DockerSandbox instance for testing"""

@@ -11,6 +11,20 @@ import requests
 logger = logging.getLogger(__name__)
 
 
+def _backend_ready() -> bool:
+    try:
+        response = requests.get(f"{BASE_URL}/health", timeout=2)
+        return response.status_code == 200
+    except requests.RequestException:
+        return False
+
+
+@pytest.fixture(autouse=True)
+def _ensure_backend_running():
+    if not _backend_ready():
+        pytest.skip("Backend server is not running at localhost:8000")
+
+
 @pytest.fixture
 def sample_file_content():
     """Create sample file content for testing"""
