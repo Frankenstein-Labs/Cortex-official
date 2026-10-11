@@ -7,8 +7,8 @@ on:
     branches: ["main", "master"]
 
 jobs:
-  build_and_test:
-    name: Build and Lint Next.js
+  nextjs_root:
+    name: Next.js Root (Lint & Build)
     runs-on: ubuntu-latest
 
     steps:
@@ -21,11 +21,68 @@ jobs:
           node-version: 20
           cache: "yarn"
 
-      - name: Install dependencies
+      - name: Install root dependencies
         run: yarn install --frozen-lockfile
 
-      - name: Lint code
+      - name: Lint Next.js
         run: yarn lint
 
       - name: Build Next.js application
         run: yarn build
+
+  frontend_workspace:
+    name: Frontend Workspace (Type-check, Test & Build)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: cortex-platform/frontend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Run type-check
+        run: npm run type-check
+
+      - name: Run frontend tests
+        run: npm test -- --reporter=dot
+
+      - name: Build frontend workspace
+        run: npm run build
+
+  backend_workspace:
+    name: Backend Workspace (Pytest Unit/Offline Tests)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: cortex-platform/backend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install backend dependencies
+        run: uv sync
+
+      - name: Run offline unit tests
+        run: uv run pytest -m "not e2e and not skill_github_e2e"
