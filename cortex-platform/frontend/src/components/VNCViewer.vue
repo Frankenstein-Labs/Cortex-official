@@ -10,7 +10,7 @@
 import { ref, onBeforeUnmount, watch } from 'vue';
 import { getVNCUrl } from '@/api/agent';
 // @ts-expect-error - @novnc/novnc ships no type declarations
-import RFB from '@novnc/novnc/lib/rfb';
+import RFB from '@novnc/novnc';
 
 const props = defineProps<{
   sessionId: string;

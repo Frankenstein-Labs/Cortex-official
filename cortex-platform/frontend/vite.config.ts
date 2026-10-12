@@ -6,6 +6,9 @@ import { resolve } from "path";
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   base: mode === "production" ? "/studio/" : "/",
+  build: {
+    target: "es2022",
+  },
   plugins: [vue(), (monacoEditorPlugin as any).default({})],
   resolve: {
     alias: {
