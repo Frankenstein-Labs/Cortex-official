@@ -21,11 +21,31 @@ jobs:
           node-version: 20
           cache: "yarn"
 
-      - name: Install dependencies
+      - name: Install root dependencies
         run: yarn install --frozen-lockfile
 
-      - name: Lint code
+      - name: Install frontend dependencies
+        run: npm --prefix cortex-platform/frontend ci
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check backend compilation
+        run: yarn check:backend
+
+      - name: Lint Next.js site
         run: yarn lint
 
-      - name: Build Next.js application
-        run: yarn build
+      - name: Lint frontend workspace
+        run: npm --prefix cortex-platform/frontend run lint
+
+      - name: Typecheck frontend workspace
+        run: yarn typecheck:workspace
+
+      - name: Test frontend workspace
+        run: npm --prefix cortex-platform/frontend run test
+
+      - name: Build all applications
+        run: yarn build:all
