@@ -30,7 +30,7 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: Install frontend workspace dependencies
-        run: cd cortex-platform/frontend && npm ci
+        run: npm --prefix cortex-platform/frontend install
 
       - name: Check backend compilation
         run: yarn check:backend
