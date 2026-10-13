@@ -5,6 +5,8 @@ from unittest.mock import patch, mock_open
 from conftest import BASE_URL
 import logging
 
+pytestmark = pytest.mark.e2e
+
 
 logger = logging.getLogger(__name__)
 
