@@ -8,7 +8,7 @@ on:
 
 jobs:
   build_and_test:
-    name: Build and Lint Next.js
+    name: Build and Lint Cortex Platform
     runs-on: ubuntu-latest
 
     steps:
@@ -21,11 +21,28 @@ jobs:
           node-version: 20
           cache: "yarn"
 
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
 
-      - name: Lint code
+      - name: Install root dependencies
+        run: yarn install
+
+      - name: Install frontend workspace dependencies
+        run: npm --prefix cortex-platform/frontend install
+
+      - name: Lint Next.js site
         run: yarn lint
 
-      - name: Build Next.js application
-        run: yarn build
+      - name: Typecheck Vue workspace
+        run: yarn typecheck:workspace
+
+      - name: Run Vue workspace tests
+        run: npm --prefix cortex-platform/frontend run test
+
+      - name: Check backend Python compilation
+        run: yarn check:backend
+
+      - name: Build all applications
+        run: yarn build:all
