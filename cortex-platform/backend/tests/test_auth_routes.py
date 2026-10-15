@@ -104,6 +104,9 @@ def authenticated_admin(client, admin_user_data):
     raise Exception("Failed to authenticate admin user")
 
 
+pytestmark = pytest.mark.e2e
+
+
 class TestAuthRoutes:
     """Test class for authentication routes using end-to-end testing"""
 

@@ -27,5 +27,26 @@ jobs:
       - name: Lint code
         run: yarn lint
 
-      - name: Build Next.js application
-        run: yarn build
+      - name: Check Python backend
+        run: yarn check:backend
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Run backend unit tests
+        run: uv run pytest -m "not e2e and not skill_github_e2e"
+        working-directory: cortex-platform/backend
+
+      - name: Install frontend workspace dependencies
+        run: npm --prefix cortex-platform/frontend install
+
+      - name: Workspace typecheck
+        run: yarn typecheck:workspace
+
+      - name: Build all applications
+        run: yarn build:all
