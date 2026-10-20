@@ -29,3 +29,20 @@ jobs:
 
       - name: Build Next.js application
         run: yarn build
+
+      - name: Install frontend workspace dependencies
+        run: npm --prefix cortex-platform/frontend ci
+
+      - name: Typecheck frontend workspace
+        run: yarn typecheck:workspace
+
+      - name: Build frontend workspace
+        run: yarn build:workspace
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check backend code compilation
+        run: yarn check:backend
