@@ -7,8 +7,8 @@ on:
     branches: ["main", "master"]
 
 jobs:
-  build_and_test:
-    name: Build and Lint Next.js
+  nextjs:
+    name: Next.js Site (Lint & Build)
     runs-on: ubuntu-latest
 
     steps:
@@ -24,8 +24,79 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
-      - name: Lint code
+      - name: Lint Next.js site
         run: yarn lint
 
-      - name: Build Next.js application
+      - name: Build Next.js site
         run: yarn build
+
+  frontend_workspace:
+    name: Vue Frontend Workspace (Typecheck, Lint, Test & Build)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: "cortex-platform/frontend/package-lock.json"
+
+      - name: Install frontend workspace dependencies
+        working-directory: cortex-platform/frontend
+        run: npm ci
+
+      - name: Type-check Vue frontend
+        working-directory: cortex-platform/frontend
+        run: npm run type-check
+
+      - name: Lint Vue frontend
+        working-directory: cortex-platform/frontend
+        run: npm run lint
+
+      - name: Unit tests Vue frontend
+        working-directory: cortex-platform/frontend
+        run: npm run test
+
+      - name: Build Vue frontend
+        working-directory: cortex-platform/frontend
+        run: npm run build
+
+  backend_workspace:
+    name: Python Backend Workspace (Compile Check, Tests & Evals)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Install backend dependencies
+        working-directory: cortex-platform/backend
+        run: uv sync --frozen
+
+      - name: Syntax / compilation check
+        run: python3 -m compileall -q cortex-platform/backend/app
+
+      - name: Offline unit tests
+        working-directory: cortex-platform/backend
+        run: >
+          uv run pytest
+          --ignore=tests/test_api_file.py
+          --ignore=tests/test_auth_routes.py
+          --ignore=tests/test_sandbox_file.py
+          -m "not e2e and not skill_github_e2e"
+
+      - name: Behavioral evals
+        working-directory: cortex-platform/backend
+        run: uv run python -m evals.run
