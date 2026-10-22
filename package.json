@@ -12,6 +12,11 @@
     "start": "next start",
     "format": "prettier --write .",
     "lint": "next lint",
+    "lint:workspace": "npm --prefix cortex-platform/frontend run lint",
+    "lint:all": "yarn lint && yarn lint:workspace",
+    "test:frontend": "npm --prefix cortex-platform/frontend run test",
+    "test:backend": "cd cortex-platform/backend && uv run pytest -m \"not e2e and not skill_github_e2e\" --ignore=tests/test_api_file.py --ignore=tests/test_auth_routes.py --ignore=tests/test_sandbox_file.py",
+    "test:all": "yarn test:frontend && yarn test:backend",
     "prepare": "husky"
   },
   "dependencies": {
