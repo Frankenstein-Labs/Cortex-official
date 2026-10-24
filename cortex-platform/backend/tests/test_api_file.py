@@ -10,6 +10,8 @@ import requests
 
 logger = logging.getLogger(__name__)
 
+pytestmark = pytest.mark.e2e
+
 
 @pytest.fixture
 def sample_file_content():

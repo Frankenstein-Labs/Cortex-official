@@ -12,6 +12,8 @@ from app.domain.models.tool_result import ToolResult
 
 logger = logging.getLogger(__name__)
 
+pytestmark = pytest.mark.e2e
+
 
 @pytest.fixture
 def sandbox_instance():
