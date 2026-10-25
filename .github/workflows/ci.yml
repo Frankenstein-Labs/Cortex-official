@@ -44,7 +44,7 @@ jobs:
           node-version: 20
 
       - name: Install Frontend Workspace Dependencies
-        run: npm --prefix cortex-platform/frontend ci
+        run: npm --prefix cortex-platform/frontend install
 
       - name: Typecheck Frontend Workspace
         run: npm --prefix cortex-platform/frontend run type-check
