@@ -1,4 +1,7 @@
 import pytest
+
+pytestmark = pytest.mark.e2e
+
 import logging
 import requests
 from conftest import BASE_URL
