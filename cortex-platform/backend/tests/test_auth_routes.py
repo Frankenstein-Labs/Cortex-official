@@ -6,6 +6,8 @@ from conftest import BASE_URL
 
 logger = logging.getLogger(__name__)
 
+pytestmark = pytest.mark.e2e
+
 
 @pytest.fixture
 def test_user_data():
@@ -443,4 +445,4 @@ class TestAuthRoutes:
         me_response = client.get(me_url, headers=headers)
         logger.info(f"Token refresh workflow me response: {me_response.status_code} - {me_response.text}")
         assert me_response.status_code == 200
-        assert me_response.json()["data"]["email"] == authenticated_user["user_data"]["email"] 
+        assert me_response.json()["data"]["email"] == authenticated_user["user_data"]["email"]

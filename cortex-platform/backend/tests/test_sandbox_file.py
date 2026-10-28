@@ -12,6 +12,8 @@ from app.domain.models.tool_result import ToolResult
 
 logger = logging.getLogger(__name__)
 
+pytestmark = pytest.mark.e2e
+
 
 @pytest.fixture
 def sandbox_instance():
@@ -258,4 +260,4 @@ async def test_file_overwrite(sandbox_instance, temp_file_path):
     download_result = await sandbox_instance.file_download(temp_file_path)
     downloaded_content = download_result.read()
     assert downloaded_content == new_content
-    assert downloaded_content != initial_content 
+    assert downloaded_content != initial_content

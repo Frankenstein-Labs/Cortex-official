@@ -10,6 +10,8 @@ import requests
 
 logger = logging.getLogger(__name__)
 
+pytestmark = pytest.mark.e2e
+
 
 @pytest.fixture
 def sample_file_content():
@@ -213,4 +215,3 @@ def test_upload_binary_file(client):
     
     assert download_response.status_code == 200
     assert download_response.content == binary_content
-
