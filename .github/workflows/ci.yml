@@ -8,7 +8,7 @@ on:
 
 jobs:
   build_and_test:
-    name: Build and Lint Next.js
+    name: Build, Test, and Lint Platform
     runs-on: ubuntu-latest
 
     steps:
@@ -21,11 +21,37 @@ jobs:
           node-version: 20
           cache: "yarn"
 
-      - name: Install dependencies
+      - name: Install root dependencies
         run: yarn install --frozen-lockfile
 
-      - name: Lint code
+      - name: Lint Next.js application
         run: yarn lint
 
       - name: Build Next.js application
         run: yarn build
+
+      - name: Install Vue frontend workspace dependencies
+        run: npm --prefix cortex-platform/frontend install
+
+      - name: Typecheck Vue frontend workspace
+        run: npm --prefix cortex-platform/frontend run type-check
+
+      - name: Test Vue frontend workspace
+        run: npm --prefix cortex-platform/frontend test -- --run
+
+      - name: Build Vue frontend workspace
+        run: npm --prefix cortex-platform/frontend run build
+
+      - name: Install uv for Python backend
+        uses: astral-sh/setup-uv@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile Python backend
+        run: python3 -m compileall -q cortex-platform/backend/app
+
+      - name: Run Python backend unit tests
+        run: cd cortex-platform/backend && uv run pytest -m "not e2e and not skill_github_e2e"
