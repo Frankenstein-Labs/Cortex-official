@@ -31,7 +31,7 @@ jobs:
         run: yarn build
 
       - name: Install Vue frontend workspace dependencies
-        run: npm --prefix cortex-platform/frontend ci
+        run: npm --prefix cortex-platform/frontend install
 
       - name: Typecheck Vue frontend workspace
         run: npm --prefix cortex-platform/frontend run type-check
