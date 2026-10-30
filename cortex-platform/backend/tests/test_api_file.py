@@ -1,4 +1,7 @@
 import pytest
+
+pytestmark = pytest.mark.e2e
+
 import tempfile
 import os
 import io

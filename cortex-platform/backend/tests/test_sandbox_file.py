@@ -3,6 +3,9 @@ Integration tests for sandbox file upload and download functionality
 """
 import logging
 import pytest
+
+pytestmark = pytest.mark.e2e
+
 import tempfile
 import os
 import io
