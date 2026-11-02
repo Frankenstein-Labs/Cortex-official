@@ -6,6 +6,8 @@ from conftest import BASE_URL
 
 logger = logging.getLogger(__name__)
 
+pytestmark = pytest.mark.e2e
+
 
 @pytest.fixture
 def test_user_data():

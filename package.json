@@ -9,6 +9,8 @@
     "build:all": "yarn build && yarn build:workspace",
     "check:backend": "python3 -m compileall -q cortex-platform/backend/app",
     "typecheck:workspace": "npm --prefix cortex-platform/frontend run type-check",
+    "test:frontend": "npm --prefix cortex-platform/frontend test",
+    "test:backend": "cd cortex-platform/backend && uv run pytest -m \"not e2e and not skill_github_e2e\"",
     "start": "next start",
     "format": "prettier --write .",
     "lint": "next lint",
