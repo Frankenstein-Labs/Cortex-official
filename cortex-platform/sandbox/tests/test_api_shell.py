@@ -11,6 +11,8 @@ import pytest
 
 from tests.conftest import BASE_URL
 
+pytestmark = pytest.mark.e2e
+
 
 def _exec(client, session_id, command, exec_dir=None):
     payload = {"id": session_id, "command": command}

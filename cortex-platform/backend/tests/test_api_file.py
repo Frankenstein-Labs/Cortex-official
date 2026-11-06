@@ -2,6 +2,8 @@ import pytest
 import tempfile
 import os
 import io
+
+pytestmark = pytest.mark.e2e
 from unittest.mock import patch, mock_open
 from conftest import BASE_URL
 import logging

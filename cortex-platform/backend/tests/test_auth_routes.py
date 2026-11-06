@@ -3,6 +3,8 @@ import logging
 import requests
 from conftest import BASE_URL
 
+pytestmark = pytest.mark.e2e
+
 
 logger = logging.getLogger(__name__)
 
